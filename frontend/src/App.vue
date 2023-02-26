@@ -1,16 +1,6 @@
 <template>
   <v-app>
-		<v-navigation-drawer app>
-		</v-navigation-drawer>
-		
-		<v-app-bar app>
-		</v-app-bar>
-
-		<v-main>
-			<v-container fluid>
-				<router-view></router-view>
-			</v-container>
-		</v-main>
+		<router-view></router-view>
 
 		<v-footer app>
 			<div class="footer-text">ERDKERN Producations</div>
@@ -25,5 +15,9 @@
 <style scoped>
 .footer-text {
 	margin-left: auto;
+}
+
+h1 {
+	margin-left: 20px;
 }
 </style>

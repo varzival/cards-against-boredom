@@ -3,10 +3,12 @@ import { defineStore } from "pinia";
 
 export interface State {
   name: string;
-  question: Question;
+  question: Question | null;
   players: Array<Player>;
   hand: Array<string>;
   selectedCards: Array<number>;
+  vote_options: Array<Array<string>> | null;
+  selectedVoteOption: number | null;
 }
 
 export interface Player {
@@ -26,10 +28,17 @@ export const useStore = defineStore("app", {
       players: [{ name: "tester", points: 0 }],
       hand: ["Antwort 1", "Antwort 2", "Antwort 3"],
       selectedCards: [],
-      question: {
+      /*question: {
         text: "Sorry Herr Leherer, aber ich konnte meine Hausaufgaben nicht machen wegen _.",
         card_number: 2
-      }
+      },*/
+      question: null,
+      vote_options: [
+        ["Ich mag", "Züge"],
+        ["123", "Polizei"]
+      ],
+      //vote_options: null,
+      selectedVoteOption: null
     };
   },
   actions: {

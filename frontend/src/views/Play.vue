@@ -20,11 +20,11 @@
             </v-col>
           </v-row>
           <v-row
+            v-if="store.question !== null"
             v-for="(card, idx) in store.hand"
             :key="card"
-            :no-gutters="true"
           >
-            <v-col cols="1" align-self="center" style="text-align: center">
+            <v-col cols="1" align-self="center" class="card-selection-idx">
               <h3>{{ getSelectedIdx(idx) }}</h3>
             </v-col>
             <v-col>
@@ -37,8 +37,18 @@
                   !store.selectedCards.includes(idx)
                 "
                 @click="selectCard(idx)"
-                :ripple="false"
               />
+            </v-col>
+          </v-row>
+          <v-row
+            v-if="store.vote_options !== null"
+            v-for="(vote_option, idx) in store.vote_options"
+            :key="idx"
+            :class="['vote-option']"
+          >
+            <v-col cols="1"> </v-col>
+            <v-col>
+              <VoteOption :cards="vote_option" :idx="idx"> </VoteOption>
             </v-col>
           </v-row>
         </v-col>
@@ -51,12 +61,14 @@
 <script lang="ts" setup>
 import Card from "@/components/Card.vue";
 import PlayerOverview from "@/components/PlayerOverview.vue";
+import VoteOption from "@/components/VoteOption.vue";
 import { useStore } from "@/store/app";
 import { computed } from "vue";
 
 const store = useStore();
 
 function selectCard(idx: number) {
+  if (!store.question) return;
   if (store.selectedCards.length < store.question.card_number) {
     store.selectedCards.push(idx);
   } else {
@@ -66,17 +78,32 @@ function selectCard(idx: number) {
 }
 
 const stateText = computed<string>(() => {
+  if (store.vote_options) {
+    if (store.selectedVoteOption !== null) return "Warte auf andere Spieler...";
+    else return "Stimme für deinen Favoriten!";
+  }
+  if (!store.question) return "Warte...";
   return store.selectedCards.length >= store.question.card_number
     ? "Warte auf andere Spieler..."
     : "Wähle eine Karte!";
 });
 
 function getSelectedIdx(idx: number): string {
-  if (store.question.card_number <= 1) return "";
+  if (store.question === null || store.question.card_number <= 1) return "";
   const i = store.selectedCards.findIndex((e) => e === idx);
   if (i > -1) return i + 1 + "";
   return "";
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.vote-option {
+  margin-bottom: 10px;
+}
+
+.card-selection-idx {
+  text-align: center;
+  font-weight: bold;
+  color: red;
+}
+</style>

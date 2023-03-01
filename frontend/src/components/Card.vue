@@ -5,6 +5,7 @@
     variant="outlined"
     max-width="700px"
     :hover="props.light"
+    :ripple="false"
   >
   </v-card>
 </template>
@@ -38,7 +39,6 @@ const classes = computed(() => {
 
 <style scoped>
 .card {
-  margin: 10px;
   transition: 1s;
 }
 

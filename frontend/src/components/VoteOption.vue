@@ -14,7 +14,7 @@
           store.selectedVoteOption !== null &&
           store.selectedVoteOption !== props.idx
         "
-        :class="hover ? ['card-scaled'] : []"
+        :class="selectable ? (hover ? ['card-scaled'] : []) : []"
       />
     </v-col>
   </v-row>
@@ -25,14 +25,19 @@ import Card from "@/components/Card.vue";
 import { useStore } from "@/store/app";
 import { ref } from "vue";
 
-const props = defineProps<{
-  cards: Array<string>;
-  idx: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    cards: Array<string>;
+    idx: number;
+    selectable: boolean;
+  }>(),
+  { selectable: true }
+);
 
 const store = useStore();
 
 function selectVoteOption() {
+  if (!props.selectable) return;
   store.selectedVoteOption = props.idx;
 }
 

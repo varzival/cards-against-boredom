@@ -20,7 +20,11 @@
             </v-col>
           </v-row>
           <v-row
-            v-if="store.question !== null"
+            v-if="
+              store.question !== null &&
+              store.voteOptions === null &&
+              store.voteResult === null
+            "
             v-for="(card, idx) in store.hand"
             :key="card"
           >
@@ -41,8 +45,8 @@
             </v-col>
           </v-row>
           <v-row
-            v-if="store.vote_options !== null"
-            v-for="(vote_option, idx) in store.vote_options"
+            v-if="store.voteOptions !== null && store.voteResult === null"
+            v-for="(vote_option, idx) in store.voteOptions"
             :key="idx"
             :class="['vote-option']"
           >
@@ -50,6 +54,43 @@
             <v-col>
               <VoteOption :cards="vote_option" :idx="idx"> </VoteOption>
             </v-col>
+          </v-row>
+          <v-row
+            v-if="store.voteResult !== null && store.voteOptions !== null"
+            v-for="(playerVote, idx) in store.voteResult"
+          >
+            <v-col cols="1"> </v-col>
+            <v-col>
+              <div class="player-vote-owner">
+                <h2>{{ playerVote.owner }}</h2>
+              </div>
+              <VoteOption
+                :cards="store.voteOptions[playerVote.vote]"
+                :idx="idx"
+                :selectable="false"
+              >
+              </VoteOption>
+              <div class="player-vote-players">
+                <h3>
+                  <template
+                    v-for="(player, idx) in playerVote.players"
+                    :key="player"
+                    >{{ player
+                    }}{{
+                      idx < playerVote.players.length - 1 ? ", " : ""
+                    }}</template
+                  >
+                </h3>
+              </div>
+            </v-col>
+          </v-row>
+          <v-row
+            v-if="store.voteResult !== null && store.voteOptions !== null"
+            justify="center"
+            class="continue-btn"
+          >
+            <v-col cols="1"></v-col>
+            <v-btn prepend-icon="mdi-arrow-right">Weiter!</v-btn>
           </v-row>
         </v-col>
         <v-spacer></v-spacer>
@@ -78,7 +119,10 @@ function selectCard(idx: number) {
 }
 
 const stateText = computed<string>(() => {
-  if (store.vote_options) {
+  if (store.voteResult) {
+    return "Auswertung";
+  }
+  if (store.voteOptions) {
     if (store.selectedVoteOption !== null) return "Warte auf andere Spieler...";
     else return "Stimme für deinen Favoriten!";
   }
@@ -105,5 +149,19 @@ function getSelectedIdx(idx: number): string {
   text-align: center;
   font-weight: bold;
   color: red;
+}
+
+.player-vote-owner {
+  text-align: center;
+  margin: 5px;
+}
+
+.player-vote-players {
+  text-align: center;
+  margin: 10px 5px;
+}
+
+.continue-btn {
+  margin-top: 50px;
 }
 </style>

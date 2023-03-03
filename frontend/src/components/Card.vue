@@ -4,7 +4,7 @@
     :text="props.text"
     variant="outlined"
     max-width="700px"
-    :hover="props.light"
+    :hover="props.selectable"
     :ripple="false"
   >
   </v-card>

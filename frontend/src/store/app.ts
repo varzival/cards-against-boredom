@@ -7,8 +7,16 @@ export interface State {
   players: Array<Player>;
   hand: Array<string>;
   selectedCards: Array<number>;
-  vote_options: Array<Array<string>> | null;
+  voteOptions: Array<Array<string>> | null;
   selectedVoteOption: number | null;
+  voteResult: Array<PlayerVote> | null;
+  readyForNextRound: boolean;
+}
+
+export interface PlayerVote {
+  players: Array<string>;
+  vote: number;
+  owner: string;
 }
 
 export interface Player {
@@ -33,12 +41,25 @@ export const useStore = defineStore("app", {
         card_number: 2
       },*/
       question: null,
-      vote_options: [
+      voteOptions: [
         ["Ich mag", "Züge"],
         ["123", "Polizei"]
       ],
-      //vote_options: null,
-      selectedVoteOption: null
+      //voteOptions: null,
+      selectedVoteOption: null,
+      voteResult: [
+        {
+          players: ["Tester 1", "Tester 2"],
+          owner: "Tester 3",
+          vote: 0
+        },
+        {
+          players: ["Tester 4", "Tester 5", "Tester 6"],
+          owner: "Tester 4",
+          vote: 1
+        }
+      ],
+      readyForNextRound: false
     };
   },
   actions: {

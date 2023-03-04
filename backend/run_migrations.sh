@@ -1,0 +1,1 @@
+ts-node ./node_modules/.bin/typeorm migration:run -d ./ormconfig.ts

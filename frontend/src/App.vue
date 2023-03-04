@@ -9,7 +9,30 @@
 </template>
 
 <script lang="ts" setup>
-//
+import { nextTick, onMounted, watch } from "vue";
+import { createSocket, socket } from "./socket";
+import { useStore } from "./store/app";
+
+const store = useStore();
+
+onMounted(() => {
+  if (store.name) {
+    nextTick(async () => {
+      createSocket(store.name);
+      if (!socket.connected) socket.connect();
+    });
+  }
+});
+
+watch(
+  () => store.name,
+  (newValue) => {
+    if (newValue && !socket.connected) {
+      createSocket(store.name);
+      socket.connect();
+    }
+  }
+);
 </script>
 
 <style scoped>

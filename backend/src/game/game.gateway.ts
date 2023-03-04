@@ -1,38 +1,62 @@
 import {
   WebSocketGateway,
   SubscribeMessage,
-  MessageBody
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect
 } from "@nestjs/websockets";
 import { GameService } from "./game.service";
-import { CreateGameDto } from "./dto/create-game.dto";
 import { UpdateGameDto } from "./dto/update-game.dto";
 
-@WebSocketGateway()
-export class GameGateway {
+@WebSocketGateway({
+  cors: {
+    origin: "*"
+  }
+})
+export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private readonly gameService: GameService) {}
 
   @SubscribeMessage("createGame")
-  create(@MessageBody() createGameDto: CreateGameDto) {
-    return this.gameService.create(createGameDto);
+  create() {
+    return this.gameService.create();
   }
 
-  @SubscribeMessage("findAllGame")
-  findAll() {
-    return this.gameService.findAll();
+  @SubscribeMessage("findGame")
+  findOne() {
+    return this.gameService.findOne();
   }
 
-  @SubscribeMessage("findOneGame")
-  findOne(@MessageBody() id: number) {
-    return this.gameService.findOne(id);
+  async handleDisconnect(client: any, ...args: any[]) {
+    console.log(
+      "Disconnected from",
+      client.handshake.query.name,
+      "id:",
+      client.id
+    );
   }
 
-  @SubscribeMessage("updateGame")
-  update(@MessageBody() updateGameDto: UpdateGameDto) {
-    return this.gameService.update(updateGameDto.id, updateGameDto);
-  }
+  async handleConnection(client: any, ...args: any[]) {
+    console.log("Connected to", client.handshake.query.name, "id:", client.id);
+    const game = await this.gameService.findOne();
 
-  @SubscribeMessage("removeGame")
-  remove(@MessageBody() id: number) {
-    return this.gameService.remove(id);
+    const user = await this.gameService.findUser(client.handshake.query.name);
+    this.gameService.assignUserToGame(user, game);
+
+    const gameState = {
+      players: game.users.sort((a, b) => {
+        return b.points - a.points;
+      }),
+      hand: game.deckOfCards
+        .sort((a, b) => {
+          return a.order - b.order;
+        })
+        .map((doc) => doc.card),
+      question: {
+        text: game.deckOfQuestions[0]?.question?.text,
+        card_number: game.deckOfQuestions[0]?.question?.num
+      }
+    };
+    console.log(gameState);
+    client.emit("gameState", gameState);
   }
 }

@@ -1,19 +1,15 @@
 import {
   WebSocketGateway,
   SubscribeMessage,
-  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect
 } from "@nestjs/websockets";
 import { GameService } from "./game.service";
-import { UpdateGameDto } from "./dto/update-game.dto";
 
-@WebSocketGateway({
-  cors: {
-    origin: "*"
-  }
-})
+@WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  clientByName: Map<string, any> = new Map<string, any>();
+
   constructor(private readonly gameService: GameService) {}
 
   @SubscribeMessage("createGame")
@@ -33,6 +29,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       "id:",
       client.id
     );
+    this.clientByName.delete(client.handshake.query.name);
   }
 
   async handleConnection(client: any, ...args: any[]) {
@@ -50,7 +47,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         .sort((a, b) => {
           return a.order - b.order;
         })
-        .map((doc) => doc.card),
+        .map((doc) => doc.card)
+        .map((card) => card.text),
       question: {
         text: game.deckOfQuestions[0]?.question?.text,
         card_number: game.deckOfQuestions[0]?.question?.num
@@ -58,5 +56,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
     console.log(gameState);
     client.emit("gameState", gameState);
+    this.clientByName.set(client.handshake.query.name, client);
   }
 }

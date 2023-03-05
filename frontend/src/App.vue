@@ -11,15 +11,22 @@
 <script lang="ts" setup>
 import { nextTick, onMounted, watch } from "vue";
 import { createSocket, socket } from "./socket";
-import { useStore } from "./store/app";
+import { State, useStore } from "./store/app";
 
 const store = useStore();
+
+function initSocket() {
+  createSocket(store.name);
+  if (!socket.connected) socket.connect();
+  socket.on("gameState", (payload: State) => {
+    store.setState(payload);
+  });
+}
 
 onMounted(() => {
   if (store.name) {
     nextTick(async () => {
-      createSocket(store.name);
-      if (!socket.connected) socket.connect();
+      initSocket();
     });
   }
 });
@@ -28,8 +35,7 @@ watch(
   () => store.name,
   (newValue) => {
     if (newValue && !socket.connected) {
-      createSocket(store.name);
-      socket.connect();
+      initSocket();
     }
   }
 );

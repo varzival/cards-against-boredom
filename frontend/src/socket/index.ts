@@ -21,8 +21,7 @@ export let socket = {
 
 export function createSocket(name: string) {
   // TODO use auth data here
-  const URL = process.env.VUE_APP_BACKEND_URL || "http://localhost:5000";
-  const newSocket = io(URL, { autoConnect: false, query: { name: name } });
+  const newSocket = io("/", { autoConnect: false, query: { name: name } });
 
   newSocket.onAny((event, ...args) => {
     console.log(event, args);

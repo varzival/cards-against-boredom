@@ -36,18 +36,18 @@ export const useStore = defineStore("app", {
       players: [{ name: "tester", points: 0 }],
       hand: ["Antwort 1", "Antwort 2", "Antwort 3"],
       selectedCards: [],
-      /*question: {
+      question: {
         text: "Sorry Herr Leherer, aber ich konnte meine Hausaufgaben nicht machen wegen _.",
         card_number: 2
-      },*/
-      question: null,
-      voteOptions: [
+      },
+      //question: null,
+      /*voteOptions: [
         ["Ich mag", "Züge"],
         ["123", "Polizei"]
-      ],
-      //voteOptions: null,
+      ],*/
+      voteOptions: null,
       selectedVoteOption: null,
-      voteResult: [
+      /*voteResult: [
         {
           players: ["Tester 1", "Tester 2"],
           owner: "Tester 3",
@@ -58,7 +58,8 @@ export const useStore = defineStore("app", {
           owner: "Tester 4",
           vote: 1
         }
-      ],
+      ],*/
+      voteResult: null,
       readyForNextRound: false
     };
   },
@@ -68,6 +69,18 @@ export const useStore = defineStore("app", {
     },
     addPlayer(name: string) {
       this.players.push({ name, points: 0 });
+    },
+    setState(payload: State) {
+      if (payload.players) this.players = payload.players;
+      if (payload.hand) this.hand = payload.hand;
+      if (payload.selectedCards) this.selectedCards = payload.selectedCards;
+      if (payload.question) this.question = payload.question;
+      if (payload.voteOptions) this.voteOptions = payload.voteOptions;
+      if (payload.selectedVoteOption)
+        this.selectedVoteOption = payload.selectedVoteOption;
+      if (payload.voteResult) this.voteResult = payload.voteResult;
+      if (payload.readyForNextRound)
+        this.readyForNextRound = payload.readyForNextRound;
     }
   }
 });

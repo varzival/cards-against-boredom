@@ -3,6 +3,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { GameModule } from "./game/game.module";
+import { AuthModule } from "./auth/auth.module";
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -15,7 +16,8 @@ import { GameModule } from "./game/game.module";
       entities: [__dirname + "/../**/*.entity{.ts,.js}"],
       synchronize: false
     }),
-    GameModule
+    GameModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService]

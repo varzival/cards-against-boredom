@@ -22,10 +22,12 @@
     "typeorm": "typeorm-ts-node-commonjs"
   },
   "dependencies": {
+    "@fastify/secure-session": "^6.0.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^9.0.0",
+    "@nestjs/platform-fastify": "^9.3.9",
     "@nestjs/platform-socket.io": "^9.3.9",
     "@nestjs/typeorm": "^9.0.1",
     "@nestjs/websockets": "^9.3.9",

@@ -33,7 +33,8 @@ export default defineConfig({
       "/socket.io": {
         target: "ws://localhost:5000",
         ws: true
-      }
+      },
+      "/auth": "http://localhost:5000"
     }
   }
 });

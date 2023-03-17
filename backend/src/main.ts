@@ -15,7 +15,10 @@ async function bootstrap() {
   await app.register(secureSession, {
     secret:
       "asldlasdaasdfpijrpgpoepokgpokerldsfpoptokkthjnnngfdjkdlfgpopqwwmersdsay",
-    salt: "lptlpghokdkxjiwu"
+    salt: "lptlpghokdkxjiwu",
+    cookie: {
+      path: "/"
+    }
   });
 
   await app.listen(process.env.PORT || 5000);

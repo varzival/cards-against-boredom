@@ -8,6 +8,7 @@ import { User } from "./entities/user.entity";
 import { Question } from "./entities/question.entity";
 import { DeckOfCards } from "./entities/deckOfCards.entity";
 import { DeckOfQuestions } from "./entities/deckOfQuestions.entity";
+import { GameController } from './game.controller';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { DeckOfQuestions } from "./entities/deckOfQuestions.entity";
     TypeOrmModule.forFeature([DeckOfCards]),
     TypeOrmModule.forFeature([DeckOfQuestions])
   ],
-  providers: [GameGateway, GameService]
+  providers: [GameGateway, GameService],
+  controllers: [GameController]
 })
 export class GameModule {}

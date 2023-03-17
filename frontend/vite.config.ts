@@ -34,7 +34,8 @@ export default defineConfig({
         target: "ws://localhost:5000",
         ws: true
       },
-      "/auth": "http://localhost:5000"
+      "/auth": "http://localhost:5000",
+      "/game": "http://localhost:5000"
     }
   }
 });

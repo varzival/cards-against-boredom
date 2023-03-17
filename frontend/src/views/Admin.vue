@@ -6,12 +6,34 @@
   </v-app-bar>
 
   <v-main>
+    <v-alert
+      v-model="showAlert"
+      closable
+      title="ALAAARM!!"
+      text="Login fehlgeschlagen."
+      type="error"
+      style="position: absolute; top: 10vh; right: 5vw; z-index: 9999999"
+    >
+    </v-alert>
     <v-container fluid>
-      <v-row>
-        <v-col></v-col>
-        <v-col>
-          <v-row class="name-input" align="center">
-            <v-col cols="10" align-self="center">
+      <v-row v-if="isAdmin">
+        <v-col cols="0" md="4"></v-col>
+        <v-col cols="12" md="4" align="center">
+          <template v-if="store.gameStarted">
+            <h2>Spiel läuft!</h2>
+            <div style="margin-top: 10px">
+              <v-btn> Spiel stoppen! </v-btn>
+            </div>
+          </template>
+          <v-btn v-else @click="startGame()"> Spiel starten! </v-btn>
+        </v-col>
+        <v-col cols="0" md="4"></v-col>
+      </v-row>
+      <v-row v-else justify="start">
+        <v-col cols="0" md="4"></v-col>
+        <v-col cols="12" md="4">
+          <v-row class="name-input" align="center" justify="center">
+            <v-col cols="12" md="10" align-self="center">
               <v-text-field
                 v-model="adminPwd"
                 type="password"
@@ -20,7 +42,7 @@
                 hide-details="auto"
               ></v-text-field>
             </v-col>
-            <v-col cols="2" align-self="center">
+            <v-col cols="12" md="2" align-self="center">
               <v-btn
                 @click="login()"
                 :disabled="!adminPwd || !(adminPwd.length <= 30)"
@@ -30,7 +52,7 @@
             </v-col>
           </v-row>
         </v-col>
-        <v-col></v-col>
+        <v-col cols="0" lg="4"></v-col>
       </v-row>
     </v-container>
   </v-main>
@@ -38,24 +60,65 @@
 
 <script lang="ts" setup>
 import PlayerOverview from "@/components/PlayerOverview.vue";
-import { socket } from "@/socket";
 import { useStore } from "@/store/app";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 
 const store = useStore();
 const adminPwd = ref("");
+const isAdmin = ref(false);
+const showAlert = ref(false);
 
 const rules = ref([
   (value: string) => !!value || "Required.",
   (value: string) => (value && value.length <= 30) || "übertreib nicht"
 ]);
 
-function login() {
-  fetch("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({
-      password: adminPwd.value
-    })
+async function login() {
+  try {
+    await fetch("/auth/login", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        password: adminPwd.value
+      })
+    });
+    isAdmin.value = await isAdminCheck();
+    if (!isAdmin.value) {
+      adminPwd.value = "";
+      showAlert.value = true;
+      setTimeout(() => {
+        showAlert.value = false;
+      }, 5000);
+    }
+  } catch (e) {
+    adminPwd.value = "";
+    showAlert.value = true;
+    setTimeout(() => {
+      showAlert.value = false;
+    }, 5000);
+  }
+}
+
+async function startGame() {
+  await fetch("/game/start", {
+    method: "POST"
   });
 }
+
+async function isAdminCheck() {
+  try {
+    const response = await fetch("/auth/is_admin");
+    if (response.status <= 299) return true;
+    else return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+onMounted(async () => {
+  isAdmin.value = await isAdminCheck();
+});
 </script>

@@ -1,5 +1,6 @@
 // Utilities
 import { defineStore } from "pinia";
+import { uptime } from "process";
 
 export interface State {
   name: string;
@@ -11,6 +12,7 @@ export interface State {
   selectedVoteOption: number | null;
   voteResult: Array<PlayerVote> | null;
   readyForNextRound: boolean;
+  gameStarted: boolean;
 }
 
 export interface PlayerVote {
@@ -40,6 +42,7 @@ export const useStore = defineStore("app", {
         text: "Sorry Herr Leherer, aber ich konnte meine Hausaufgaben nicht machen wegen _.",
         card_number: 2
       },
+      gameStarted: false,
       //question: null,
       /*voteOptions: [
         ["Ich mag", "Züge"],
@@ -79,8 +82,10 @@ export const useStore = defineStore("app", {
       if (payload.selectedVoteOption)
         this.selectedVoteOption = payload.selectedVoteOption;
       if (payload.voteResult) this.voteResult = payload.voteResult;
-      if (payload.readyForNextRound)
+      if (payload.readyForNextRound !== undefined)
         this.readyForNextRound = payload.readyForNextRound;
+      if (payload.gameStarted !== undefined)
+        this.gameStarted = payload.gameStarted;
     }
   }
 });

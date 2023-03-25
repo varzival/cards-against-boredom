@@ -1,5 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from "typeorm";
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany
+} from "typeorm";
 import { Game } from "./game.entity";
+import { HandOfCards } from "./handOfCards.entity";
 
 @Entity()
 export class User {
@@ -14,4 +21,9 @@ export class User {
 
   @ManyToOne(() => Game, (game) => game.users, { onDelete: "CASCADE" })
   game: Game;
+
+  @OneToMany(() => HandOfCards, (handOfCards) => handOfCards.user, {
+    cascade: true
+  })
+  handOfCards: HandOfCards[];
 }

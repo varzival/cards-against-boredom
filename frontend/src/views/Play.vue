@@ -10,13 +10,10 @@
       <v-row>
         <v-spacer></v-spacer>
         <v-col cols="auto">
-          <v-row :no-gutters="true">
+          <v-row :no-gutters="true" v-if="store.question">
             <v-col cols="1"></v-col>
             <v-col>
-              <Card
-                text="Sorry Herr Leherer, aber ich konnte meine Hausaufgaben nicht machen wegen _."
-                style="margin: 100px 0"
-              />
+              <Card :text="store.question?.text" style="margin: 100px 0" />
             </v-col>
           </v-row>
           <v-row

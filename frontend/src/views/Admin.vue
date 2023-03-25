@@ -22,7 +22,7 @@
           <template v-if="store.gameStarted">
             <h2>Spiel läuft!</h2>
             <div style="margin-top: 10px">
-              <v-btn> Spiel stoppen! </v-btn>
+              <v-btn @click="stopGame()"> Spiel stoppen! </v-btn>
             </div>
           </template>
           <v-btn v-else @click="startGame()"> Spiel starten! </v-btn>
@@ -104,6 +104,12 @@ async function login() {
 
 async function startGame() {
   await fetch("/game/start", {
+    method: "POST"
+  });
+}
+
+async function stopGame() {
+  await fetch("/game/stop", {
     method: "POST"
   });
 }

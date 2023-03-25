@@ -30,6 +30,6 @@ export class Game {
   })
   deckOfQuestions: DeckOfQuestions[];
 
-  @OneToMany(() => User, (user) => user.game, { cascade: true })
+  @OneToMany(() => User, (user) => user.game)
   users: User[];
 }

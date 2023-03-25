@@ -35,15 +35,11 @@ export const useStore = defineStore("app", {
   state(): State {
     return {
       name: "new_player",
-      players: [{ name: "tester", points: 0 }],
-      hand: ["Antwort 1", "Antwort 2", "Antwort 3"],
+      players: [],
+      hand: [],
       selectedCards: [],
-      question: {
-        text: "Sorry Herr Leherer, aber ich konnte meine Hausaufgaben nicht machen wegen _.",
-        card_number: 2
-      },
+      question: null,
       gameStarted: false,
-      //question: null,
       /*voteOptions: [
         ["Ich mag", "Züge"],
         ["123", "Polizei"]
@@ -74,14 +70,17 @@ export const useStore = defineStore("app", {
       this.players.push({ name, points: 0 });
     },
     setState(payload: State) {
-      if (payload.players) this.players = payload.players;
-      if (payload.hand) this.hand = payload.hand;
-      if (payload.selectedCards) this.selectedCards = payload.selectedCards;
-      if (payload.question) this.question = payload.question;
-      if (payload.voteOptions) this.voteOptions = payload.voteOptions;
-      if (payload.selectedVoteOption)
+      if (payload.players !== undefined) this.players = payload.players;
+      if (payload.hand !== undefined) this.hand = payload.hand;
+      if (payload.selectedCards !== undefined)
+        this.selectedCards = payload.selectedCards;
+      if (payload.question !== undefined) this.question = payload.question;
+      if (payload.voteOptions !== undefined)
+        this.voteOptions = payload.voteOptions;
+      if (payload.selectedVoteOption !== undefined)
         this.selectedVoteOption = payload.selectedVoteOption;
-      if (payload.voteResult) this.voteResult = payload.voteResult;
+      if (payload.voteResult !== undefined)
+        this.voteResult = payload.voteResult;
       if (payload.readyForNextRound !== undefined)
         this.readyForNextRound = payload.readyForNextRound;
       if (payload.gameStarted !== undefined)

@@ -13,13 +13,16 @@ export class GameController {
   @UseGuards(AdminGuard)
   @Post("start")
   async start() {
-    await this.gameService.create();
+    const game = await this.gameService.create();
+    await this.gameService.start(game);
     await this.gameGateway.sendGameStateToAll();
   }
 
   @UseGuards(AdminGuard)
   @Post("stop")
-  stop() {
-    this.gameService.delete();
+  async stop() {
+    const game = await this.gameService.findOne();
+    await this.gameService.stop(game);
+    await this.gameGateway.sendGameStateToAll();
   }
 }

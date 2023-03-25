@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Game } from "./entities/game.entity";
 import { DataSource, IsNull, Not, Repository } from "typeorm";
@@ -11,6 +11,8 @@ import { HandOfCards } from "./entities/handOfCards.entity";
 
 @Injectable()
 export class GameService {
+  private readonly logger = new Logger(GameService.name);
+
   constructor(
     @InjectRepository(Game) private readonly gameRepository: Repository<Game>,
     @InjectRepository(Card) private readonly cardRepository: Repository<Card>,
@@ -54,6 +56,10 @@ export class GameService {
   }
 
   async start(game: Game) {
+    if (game.startedAt) {
+      this.logger.error(`game ${game.id} is already started`);
+      throw new Error(`game ${game.id} is already started`);
+    }
     await this.shuffleDeck(game);
 
     const questions = await this.questionRepository.find({
@@ -62,25 +68,27 @@ export class GameService {
     let idxQuestions = Array.from(Array(questions.length).keys());
     idxQuestions = this.shuffle(idxQuestions);
     game.deckOfQuestions = [];
+    let i = 0;
     for (const idx of idxQuestions) {
       const doq = new DeckOfQuestions();
       doq.question = questions[idx];
-      doq.order = idx;
+      doq.order = i;
       game.deckOfQuestions.push(doq);
+      i++;
     }
 
     const users = game.users;
     for (const user of users) {
       user.handOfCards = [];
-      await this.drawCard(user, game);
+      for (let i = 0; i < 10; i++) {
+        await this.drawCard(user, game);
+      }
     }
 
     game.startedAt = new Date();
 
     await this.userRepository.save(game.users);
     await this.gameRepository.save(game);
-
-    //console.log(game);
 
     return game;
   }
@@ -99,8 +107,6 @@ export class GameService {
     game.startedAt = null;
     await this.gameRepository.save(game);
 
-    //console.log(game);
-
     return game;
   }
 
@@ -111,18 +117,23 @@ export class GameService {
     let idxCards = Array.from(Array(cards.length).keys());
     idxCards = this.shuffle(idxCards);
     game.deckOfCards = [];
+    let i = 0;
     for (const idx of idxCards) {
       const doc = new DeckOfCards();
       doc.card = cards[idx];
-      doc.order = idx;
+      doc.order = i;
       game.deckOfCards.push(doc);
+      i++;
     }
   }
 
   async getFirstCard(game: Game) {
     if (!game.deckOfCards?.length) return null;
     const minOrder = Math.min(...game.deckOfCards.map((d) => d.order));
-    return game.deckOfCards.find((doc) => doc.order === minOrder);
+    const idx = game.deckOfCards.findIndex((doc) => doc.order === minOrder);
+    const doc = game.deckOfCards[idx];
+    game.deckOfCards.splice(idx, 1);
+    return doc;
   }
 
   async drawCard(user: User, game: Game) {
@@ -133,7 +144,6 @@ export class GameService {
       hoc.card = firstCard.card;
       hoc.order = user.handOfCards.length;
       user.handOfCards.push(hoc);
-      game.deckOfCards.shift();
     }
   }
 

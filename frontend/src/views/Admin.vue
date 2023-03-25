@@ -75,7 +75,7 @@ const rules = ref([
 
 async function login() {
   try {
-    await fetch("/auth/login", {
+    await fetch("/api/auth/login", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -103,20 +103,20 @@ async function login() {
 }
 
 async function startGame() {
-  await fetch("/game/start", {
+  await fetch("/api/game/start", {
     method: "POST"
   });
 }
 
 async function stopGame() {
-  await fetch("/game/stop", {
+  await fetch("/api/game/stop", {
     method: "POST"
   });
 }
 
 async function isAdminCheck() {
   try {
-    const response = await fetch("/auth/is_admin");
+    const response = await fetch("/api/auth/is_admin");
     if (response.status <= 299) return true;
     else return false;
   } catch (e) {

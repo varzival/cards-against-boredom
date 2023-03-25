@@ -23,12 +23,14 @@
   },
   "dependencies": {
     "@fastify/secure-session": "^6.0.0",
+    "@fastify/static": "^6.9.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/platform-fastify": "^9.3.9",
     "@nestjs/platform-socket.io": "^9.3.9",
+    "@nestjs/serve-static": "^3.0.1",
     "@nestjs/typeorm": "^9.0.1",
     "@nestjs/websockets": "^9.3.9",
     "pg": "^8.9.0",
@@ -37,7 +39,7 @@
     "typeorm": "0.3.12"
   },
   "devDependencies": {
-    "@nestjs/cli": "^9.0.0",
+    "@nestjs/cli": "^9.3.0",
     "@nestjs/schematics": "^9.0.0",
     "@nestjs/testing": "^9.0.0",
     "@types/express": "^4.17.13",

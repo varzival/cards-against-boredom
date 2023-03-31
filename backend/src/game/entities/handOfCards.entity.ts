@@ -1,6 +1,5 @@
 import { Column, Entity, ManyToOne, PrimaryColumn } from "typeorm";
 import { Card } from "./card.entity";
-import { Game } from "./game.entity";
 import { User } from "./user.entity";
 
 @Entity()
@@ -14,8 +13,8 @@ export class HandOfCards {
   @PrimaryColumn({ type: "int" })
   order: number;
 
-  @Column({ type: "boolean", default: "false" })
-  selected: boolean;
+  @Column({ type: "int", nullable: true })
+  selected: number;
 
   @ManyToOne(() => User, (user) => user.handOfCards, {
     onDelete: "CASCADE"

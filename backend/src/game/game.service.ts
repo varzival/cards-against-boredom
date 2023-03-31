@@ -1,32 +1,18 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Game } from "./entities/game.entity";
-import { DataSource, IsNull, Not, Raw, Repository } from "typeorm";
-import { Question } from "./entities/question.entity";
-import { Card } from "./entities/card.entity";
-import { User } from "./entities/user.entity";
-import { DeckOfCards } from "./entities/deckOfCards.entity";
-import { DeckOfQuestions } from "./entities/deckOfQuestions.entity";
-import { HandOfCards } from "./entities/handOfCards.entity";
+import { Model } from "mongoose";
+import { GameDocument, GameState, Game, User } from "./schemas/game.schema";
+import { InjectModel } from "@nestjs/mongoose";
+import { Card } from "./schemas/card.schema";
+import { Question } from "./schemas/question.schema";
 
 @Injectable()
 export class GameService {
   private readonly logger = new Logger(GameService.name);
 
   constructor(
-    @InjectRepository(Game) private readonly gameRepository: Repository<Game>,
-    @InjectRepository(Card) private readonly cardRepository: Repository<Card>,
-    @InjectRepository(Question)
-    private readonly questionRepository: Repository<Question>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    private dataSource: DataSource,
-    @InjectRepository(DeckOfCards)
-    private readonly deckOfCardsRepository: Repository<DeckOfCards>,
-    @InjectRepository(HandOfCards)
-    private readonly handOfCardsRepository: Repository<HandOfCards>,
-    @InjectRepository(DeckOfQuestions)
-    private readonly deckOfQuestionsRepository: Repository<DeckOfQuestions>
+    @InjectModel(Game.name) private gameModel: Model<Game>,
+    @InjectModel(Card.name) private cardModel: Model<Card>,
+    @InjectModel(Question.name) private questionModel: Model<Question>
   ) {}
 
   private shuffle(array: Array<any>) {
@@ -46,16 +32,22 @@ export class GameService {
   async create() {
     let game = await this.findOne();
     if (!game) {
-      game = new Game();
+      const game = new this.gameModel({
+        startedAt: null,
+        state: GameState.SELECT_CARD
+      });
+      game.save();
     }
     return game;
   }
 
-  async findOneOrCreate(): Promise<Game> {
+  async setGameState(game: Game, state: GameState) {}
+
+  async findOneOrCreate(): Promise<GameDocument> {
     return this.create();
   }
 
-  async start(game: Game) {
+  async start(game: GameDocument) {
     if (game.startedAt) {
       this.logger.error(`game ${game.id} is already started`);
       throw new Error(`game ${game.id} is already started`);
@@ -63,178 +55,124 @@ export class GameService {
     await this.shuffleDeck(game);
     await this.shuffleQuestions(game);
 
-    const users = game.users;
-    for (const user of users) {
-      user.handOfCards = [];
+    for (const user of game.users) {
+      user.cards = [];
       for (let i = 0; i < 10; i++) {
-        await this.drawCard(user, game);
+        await this.drawCard(game, user);
       }
     }
 
     game.startedAt = new Date();
 
-    await this.userRepository.save(game.users);
-    await this.gameRepository.save(game);
+    await game.save();
 
     return game;
   }
 
-  async stop(game: Game) {
-    game.deckOfCards = [];
-    await this.deckOfCardsRepository.delete({ gameId: game.id });
-    game.deckOfQuestions = [];
-    await this.deckOfQuestionsRepository.delete({ gameId: game.id });
+  async stop(game: GameDocument) {
+    game.cards = [];
+    game.questions = [];
     for (const user of game.users) {
       user.points = 0;
-      user.handOfCards = [];
-      await this.handOfCardsRepository.delete({ userId: user.id });
+      user.cards = [];
     }
 
     game.startedAt = null;
-    await this.gameRepository.save(game);
+
+    await game.save();
 
     return game;
   }
 
-  async shuffleDeck(game: Game) {
-    const cards = await this.cardRepository.find({
-      where: { id: Not(IsNull()) }
-    });
+  async shuffleDeck(game: GameDocument) {
+    const cards = await this.cardModel.find({});
     let idxCards = Array.from(Array(cards.length).keys());
     idxCards = this.shuffle(idxCards);
-    game.deckOfCards = [];
-    let i = 0;
+    game.cards = [];
     for (const idx of idxCards) {
-      const doc = new DeckOfCards();
-      doc.card = cards[idx];
-      doc.order = i;
-      game.deckOfCards.push(doc);
-      i++;
+      game.cards.push(cards[idx]);
     }
   }
 
-  async shuffleQuestions(game: Game) {
-    const questions = await this.questionRepository.find({
-      where: { id: Not(IsNull()) }
-    });
+  async shuffleQuestions(game: GameDocument) {
+    const questions = await this.questionModel.find({});
     let idxQuestions = Array.from(Array(questions.length).keys());
     idxQuestions = this.shuffle(idxQuestions);
-    game.deckOfQuestions = [];
-    let i = 0;
+    game.questions = [];
     for (const idx of idxQuestions) {
-      const doq = new DeckOfQuestions();
-      doq.question = questions[idx];
-      doq.order = i;
-      game.deckOfQuestions.push(doq);
-      i++;
+      game.questions.push(questions[idx]);
     }
   }
 
-  async drawCard(user: User, game: Game) {
-    if (!game.deckOfCards?.length) await this.shuffleDeck(game);
+  async shuffleVoteOptions(game: GameDocument) {
+    // let idxUsers = Array.from(Array(game.users.length).keys());
+    // idxUsers = this.shuffle(idxUsers);
+    // let i = 0;
+    // for (const idx of idxUsers) {
+    //   game.users[idx].voteOrder = i;
+    //   game.users[idx].votedFor = null;
+    // }
+    // await this.userRepository.save(game.users);
+  }
 
-    if (!game.deckOfCards?.length) return null;
-    const minOrder = Math.min(...game.deckOfCards.map((d) => d.order));
-    const idx = game.deckOfCards.findIndex((doc) => doc.order === minOrder);
-    const firstCard = game.deckOfCards[idx];
-    game.deckOfCards.splice(idx, 1);
+  async drawCard(game: GameDocument, user: User) {
+    if (!game.cards?.length) await this.shuffleDeck(game);
+    if (!game.cards?.length) return null;
+
+    const firstCard = game.cards.shift();
 
     if (firstCard) {
-      const hoc = new HandOfCards();
-      hoc.card = firstCard.card;
-      hoc.order = user.handOfCards.length;
-      user.handOfCards.push(hoc);
+      user.cards.push(firstCard);
     }
   }
 
-  getQuestion(game: Game) {
-    if (!game.deckOfQuestions?.length) return null;
-    const minOrder = Math.min(...game.deckOfQuestions.map((d) => d.order));
-    const idx = game.deckOfQuestions.findIndex((doc) => doc.order === minOrder);
-    return game.deckOfQuestions[idx].question;
-  }
+  async replaceSelectedCards(game: Game) {}
 
-  async deselectCards(user: User) {
-    const selectedCards = await this.handOfCardsRepository.find({
-      where: {
-        userId: user.id,
-        selected: true
-      }
-    });
-
-    for (const card of selectedCards) {
-      card.selected = false;
-      await this.handOfCardsRepository.save(card);
-    }
+  deselectCards(user: User) {
+    user.selectedCards = [];
   }
 
   async selectCard(user: User, cardIndices: Array<number>) {
-    await this.deselectCards(user);
-    const selectedCards = await this.handOfCardsRepository.find({
-      where: {
-        userId: user.id,
-        order: Raw((alias) => `${alias} IN (:...cardIndices)`, {
-          cardIndices: cardIndices
-        })
-      }
-    });
-    for (const card of selectedCards) {
-      card.selected = true;
-      await this.handOfCardsRepository.save(card);
-    }
-
-    this.logger.log(`${user.name} selected ${cardIndices}`);
+    this.deselectCards(user);
+    user.selectedCards = cardIndices;
   }
 
   allCardsChosen(game: Game) {
     for (const user of game.users) {
-      if (
-        user.handOfCards?.filter((c) => c.selected)?.length <
-        this.getQuestion(game).num
-      )
-        return false;
+      if (user.selectedCards.length < game.questions[0].num) return false;
     }
     return true;
   }
 
-  async delete() {
-    const game = await this.findOne();
-    this.gameRepository.delete(game);
+  async findOne(): Promise<any> {
+    return this.gameModel
+      .findOne()
+      .populate(["cards", "questions", "users.cards"])
+      .exec();
   }
 
-  async findOne(): Promise<Game> {
-    return await this.gameRepository.findOne({
-      where: { id: Not(IsNull()) },
-      relations: {
-        deckOfCards: {
-          card: true
-        },
-        deckOfQuestions: {
-          question: true
-        },
-        users: {
-          handOfCards: {
-            card: true
+  async findOneLean(): Promise<any> {
+    return this.gameModel
+      .findOne()
+      .populate(["cards", "questions", "users.cards"])
+      .lean()
+      .exec();
+  }
+
+  async assignUserToGame(userName: string, game: GameDocument) {
+    if (!game.users.find((u) => u.name === userName)) {
+      return this.gameModel
+        .updateOne(
+          { _id: game.id },
+          {
+            $push: {
+              users: {
+                name: userName
+              }
+            }
           }
-        }
-      }
-    });
-  }
-
-  async createUser(name: string): Promise<User> {
-    const user = await this.userRepository.create({ name });
-    await this.userRepository.save(user);
-    return user;
-  }
-
-  async findUser(name: string): Promise<User> {
-    let user = await this.userRepository.findOneBy({ name });
-    if (!user) user = await this.createUser(name);
-    return user;
-  }
-
-  async assignUserToGame(user: User, game: Game) {
-    user.game = game;
-    await this.userRepository.save(user);
+        )
+        .exec();
+    }
   }
 }

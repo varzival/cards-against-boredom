@@ -6,6 +6,7 @@ import { GameModule } from "./game/game.module";
 import { AuthModule } from "./auth/auth.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
+import { MongooseModule } from "@nestjs/mongoose";
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { join } from "path";
     AuthModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, "../../../frontend/dist/")
-    })
+    }),
+    MongooseModule.forRoot("mongodb://localhost/cards-against-kern")
   ],
   controllers: [AppController],
   providers: [AppService]

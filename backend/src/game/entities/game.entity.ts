@@ -20,14 +20,10 @@ export class Game {
   @Column({ type: "enum", enum: GameState, default: GameState.SELECT_CARD })
   gameState: GameState;
 
-  @OneToMany(() => DeckOfCards, (deckOfCards) => deckOfCards.game, {
-    cascade: true
-  })
+  @OneToMany(() => DeckOfCards, (deckOfCards) => deckOfCards.game)
   deckOfCards: DeckOfCards[];
 
-  @OneToMany(() => DeckOfQuestions, (deckOfQuestions) => deckOfQuestions.game, {
-    cascade: true
-  })
+  @OneToMany(() => DeckOfQuestions, (deckOfQuestions) => deckOfQuestions.game)
   deckOfQuestions: DeckOfQuestions[];
 
   @OneToMany(() => User, (user) => user.game)

@@ -19,6 +19,12 @@ export class User {
   @Column({ type: "int", default: "0" })
   points: number;
 
+  @Column({ type: "int", nullable: true })
+  voteOrder: number;
+
+  @Column({ type: "int", nullable: true })
+  votedFor: number;
+
   @ManyToOne(() => Game, (game) => game.users, { onDelete: "CASCADE" })
   game: Game;
 

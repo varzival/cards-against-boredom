@@ -100,6 +100,7 @@
 import Card from "@/components/Card.vue";
 import PlayerOverview from "@/components/PlayerOverview.vue";
 import VoteOption from "@/components/VoteOption.vue";
+import { socket } from "@/socket";
 import { useStore } from "@/store/app";
 import { computed } from "vue";
 
@@ -113,6 +114,10 @@ function selectCard(idx: number) {
     store.selectedCards = [];
     store.selectedCards.push(idx);
   }
+
+  if (store.selectedCards.length >= store.question.card_number) {
+    socket.emit("selectCards", { cards: store.selectedCards });
+  }
 }
 
 const stateText = computed<string>(() => {
@@ -124,9 +129,13 @@ const stateText = computed<string>(() => {
     else return "Stimme für deinen Favoriten!";
   }
   if (!store.question) return "Warte...";
+  const selectCardText =
+    store.question.card_number === 1
+      ? "Wähle eine Karte!"
+      : `Wähle ${store.question.card_number} Karten!`;
   return store.selectedCards.length >= store.question.card_number
     ? "Warte auf andere Spieler..."
-    : "Wähle eine Karte!";
+    : selectCardText;
 });
 
 function getSelectedIdx(idx: number): string {

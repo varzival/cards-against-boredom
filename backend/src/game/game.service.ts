@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Game } from "./entities/game.entity";
-import { DataSource, IsNull, Not, Repository } from "typeorm";
+import { DataSource, IsNull, Not, Raw, Repository } from "typeorm";
 import { Question } from "./entities/question.entity";
 import { Card } from "./entities/card.entity";
 import { User } from "./entities/user.entity";
@@ -61,21 +61,7 @@ export class GameService {
       throw new Error(`game ${game.id} is already started`);
     }
     await this.shuffleDeck(game);
-
-    const questions = await this.questionRepository.find({
-      where: { id: Not(IsNull()) }
-    });
-    let idxQuestions = Array.from(Array(questions.length).keys());
-    idxQuestions = this.shuffle(idxQuestions);
-    game.deckOfQuestions = [];
-    let i = 0;
-    for (const idx of idxQuestions) {
-      const doq = new DeckOfQuestions();
-      doq.question = questions[idx];
-      doq.order = i;
-      game.deckOfQuestions.push(doq);
-      i++;
-    }
+    await this.shuffleQuestions(game);
 
     const users = game.users;
     for (const user of users) {
@@ -127,24 +113,88 @@ export class GameService {
     }
   }
 
-  async getFirstCard(game: Game) {
-    if (!game.deckOfCards?.length) return null;
-    const minOrder = Math.min(...game.deckOfCards.map((d) => d.order));
-    const idx = game.deckOfCards.findIndex((doc) => doc.order === minOrder);
-    const doc = game.deckOfCards[idx];
-    game.deckOfCards.splice(idx, 1);
-    return doc;
+  async shuffleQuestions(game: Game) {
+    const questions = await this.questionRepository.find({
+      where: { id: Not(IsNull()) }
+    });
+    let idxQuestions = Array.from(Array(questions.length).keys());
+    idxQuestions = this.shuffle(idxQuestions);
+    game.deckOfQuestions = [];
+    let i = 0;
+    for (const idx of idxQuestions) {
+      const doq = new DeckOfQuestions();
+      doq.question = questions[idx];
+      doq.order = i;
+      game.deckOfQuestions.push(doq);
+      i++;
+    }
   }
 
   async drawCard(user: User, game: Game) {
     if (!game.deckOfCards?.length) await this.shuffleDeck(game);
-    const firstCard = await this.getFirstCard(game);
+
+    if (!game.deckOfCards?.length) return null;
+    const minOrder = Math.min(...game.deckOfCards.map((d) => d.order));
+    const idx = game.deckOfCards.findIndex((doc) => doc.order === minOrder);
+    const firstCard = game.deckOfCards[idx];
+    game.deckOfCards.splice(idx, 1);
+
     if (firstCard) {
       const hoc = new HandOfCards();
       hoc.card = firstCard.card;
       hoc.order = user.handOfCards.length;
       user.handOfCards.push(hoc);
     }
+  }
+
+  getQuestion(game: Game) {
+    if (!game.deckOfQuestions?.length) return null;
+    const minOrder = Math.min(...game.deckOfQuestions.map((d) => d.order));
+    const idx = game.deckOfQuestions.findIndex((doc) => doc.order === minOrder);
+    return game.deckOfQuestions[idx].question;
+  }
+
+  async deselectCards(user: User) {
+    const selectedCards = await this.handOfCardsRepository.find({
+      where: {
+        userId: user.id,
+        selected: true
+      }
+    });
+
+    for (const card of selectedCards) {
+      card.selected = false;
+      await this.handOfCardsRepository.save(card);
+    }
+  }
+
+  async selectCard(user: User, cardIndices: Array<number>) {
+    await this.deselectCards(user);
+    const selectedCards = await this.handOfCardsRepository.find({
+      where: {
+        userId: user.id,
+        order: Raw((alias) => `${alias} IN (:...cardIndices)`, {
+          cardIndices: cardIndices
+        })
+      }
+    });
+    for (const card of selectedCards) {
+      card.selected = true;
+      await this.handOfCardsRepository.save(card);
+    }
+
+    this.logger.log(`${user.name} selected ${cardIndices}`);
+  }
+
+  allCardsChosen(game: Game) {
+    for (const user of game.users) {
+      if (
+        user.handOfCards?.filter((c) => c.selected)?.length <
+        this.getQuestion(game).num
+      )
+        return false;
+    }
+    return true;
   }
 
   async delete() {

@@ -14,6 +14,9 @@ export class HandOfCards {
   @PrimaryColumn({ type: "int" })
   order: number;
 
+  @Column({ type: "boolean", default: "false" })
+  selected: boolean;
+
   @ManyToOne(() => User, (user) => user.handOfCards, {
     onDelete: "CASCADE"
   })

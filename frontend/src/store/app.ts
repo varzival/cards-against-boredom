@@ -40,24 +40,8 @@ export const useStore = defineStore("app", {
       selectedCards: [],
       question: null,
       gameStarted: false,
-      /*voteOptions: [
-        ["Ich mag", "Züge"],
-        ["123", "Polizei"]
-      ],*/
       voteOptions: null,
       selectedVoteOption: null,
-      /*voteResult: [
-        {
-          players: ["Tester 1", "Tester 2"],
-          owner: "Tester 3",
-          vote: 0
-        },
-        {
-          players: ["Tester 4", "Tester 5", "Tester 6"],
-          owner: "Tester 4",
-          vote: 1
-        }
-      ],*/
       voteResult: null,
       readyForNextRound: false
     };

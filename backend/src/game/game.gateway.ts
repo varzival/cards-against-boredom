@@ -1,16 +1,20 @@
-import { Logger } from "@nestjs/common";
+import { Body, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import {
   WebSocketGateway,
   SubscribeMessage,
   OnGatewayConnection,
-  OnGatewayDisconnect
+  OnGatewayDisconnect,
+  ConnectedSocket
 } from "@nestjs/websockets";
 import { Repository } from "typeorm";
 import { Game } from "./entities/game.entity";
 import { User } from "./entities/user.entity";
 import { GameService } from "./game.service";
 
+interface SelectCardsBody {
+  cards: Array<number>;
+}
 @WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   clientByName: Map<any, string> = new Map<any, string>();
@@ -33,6 +37,24 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return this.gameService.findOne();
   }
 
+  @SubscribeMessage("selectCards")
+  async selectCards(
+    @ConnectedSocket() client: any,
+    @Body() body: SelectCardsBody
+  ) {
+    const game = await this.gameService.findOne();
+    if (!game || !game.startedAt) throw new Error("Game has not started yet");
+    if (!this.gameService.getQuestion(game))
+      throw new Error("No question chosen");
+    if (this.gameService.getQuestion(game).num !== body.cards?.length)
+      throw new Error("Not the right amount of cards chosen");
+
+    const user = await this.gameService.findUser(client.handshake.query.name);
+    this.gameService.selectCard(user, body.cards);
+
+    console.log("all cards chosen?", this.gameService.allCardsChosen(game));
+  }
+
   async getGameState(userName: string) {
     const game = await this.gameService.findOne();
     if (!game) return null;
@@ -50,6 +72,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           return a.order - b.order;
         })
         .map((hoc) => hoc.card.text),
+      selectedCards: game.users
+        .find((u) => u.name === userName)
+        ?.handOfCards?.filter((c) => c.selected)
+        .map((c) => c.order),
       question: game.deckOfQuestions[0]?.question
         ? {
             text: game.deckOfQuestions[0].question.text,

@@ -35,6 +35,8 @@ export interface User extends Document {
   points: number;
   cards: Array<Card>;
   selectedCards: Array<number>;
+  voteOrder: number;
+  votedFor: number;
 }
 
 export type GameDocument = HydratedDocument<Game>;
@@ -59,12 +61,14 @@ export class Game {
         type: [{ type: SchemaTypes.ObjectId, ref: "Card" }],
         default: []
       },
-      selectedCards: [SchemaTypes.Number]
+      selectedCards: [SchemaTypes.Number],
+      voteOrder: SchemaTypes.Number,
+      votedFor: SchemaTypes.Number
     })
   ])
   users: Array<User>;
 
-  @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Card" }] })
+  @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Card" }], default: [] })
   cards: Array<Card>;
 
   @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Question" }] })

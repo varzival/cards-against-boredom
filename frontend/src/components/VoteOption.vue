@@ -25,6 +25,10 @@ import Card from "@/components/Card.vue";
 import { useStore } from "@/store/app";
 import { ref } from "vue";
 
+const emit = defineEmits<{
+  (e: "vote"): void;
+}>();
+
 const props = withDefaults(
   defineProps<{
     cards: Array<string>;
@@ -39,6 +43,7 @@ const store = useStore();
 function selectVoteOption() {
   if (!props.selectable) return;
   store.selectedVoteOption = props.idx;
+  emit("vote");
 }
 
 const hover = ref(false);

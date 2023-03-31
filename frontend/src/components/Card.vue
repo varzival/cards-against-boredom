@@ -16,9 +16,9 @@ import { computed } from "vue";
 const props = withDefaults(
   defineProps<{
     text: string;
-    light: boolean;
-    selectable: boolean;
-    faded: boolean;
+    light?: boolean;
+    selectable?: boolean;
+    faded?: boolean;
   }>(),
   {
     text: "...",

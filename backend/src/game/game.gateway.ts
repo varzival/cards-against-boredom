@@ -12,6 +12,10 @@ import { GameState } from "./schemas/game.schema";
 interface SelectCardsBody {
   cards: Array<number>;
 }
+
+interface VoteBody {
+  voteOption: number;
+}
 @WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   clientByName: Map<any, string> = new Map<any, string>();
@@ -26,15 +30,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @Body() body: SelectCardsBody
   ) {
     const game = await this.gameService.findOne();
-    if (!game || !game.startedAt) throw new Error("Game has not started yet");
-    if (game.state !== GameState.SELECT_CARD)
-      throw new Error(`Game is in the ${game.state} State`);
-    if (!game.questions[0]) throw new Error("No question chosen");
-    if (game.questions[0].num !== body.cards?.length)
+    const gameLean = await this.gameService.findOneLean();
+
+    if (!gameLean || !gameLean.startedAt)
+      throw new Error("Game has not started yet");
+    if (gameLean.state !== GameState.SELECT_CARD)
+      throw new Error(`Game is in the ${gameLean.state} State`);
+    if (!gameLean.questions[0]) throw new Error("No question chosen");
+    if (gameLean.questions[0].num !== body.cards?.length)
       throw new Error("Not the right amount of cards chosen");
 
     const user = game.users.find((u) => u.name === client.handshake.query.name);
     await this.gameService.selectCard(user, body.cards);
+    await game.save();
 
     if (this.gameService.allCardsChosen(game)) {
       await this.gameService.setGameState(game, GameState.VOTE);
@@ -45,21 +53,46 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await game.save();
   }
 
+  @SubscribeMessage("vote")
+  async vote(@ConnectedSocket() client: any, @Body() body: VoteBody) {
+    const game = await this.gameService.findOne();
+    const gameLean = await this.gameService.findOneLean();
+
+    if (!gameLean || !gameLean.startedAt)
+      throw new Error("Game has not started yet");
+    if (gameLean.state !== GameState.VOTE)
+      throw new Error(`Game is in the ${gameLean.state} State`);
+
+    const user = game.users.find((u) => u.name === client.handshake.query.name);
+    await this.gameService.vote(user, body.voteOption);
+    await game.save();
+
+    if (this.gameService.allVoted(game)) {
+      await this.gameService.setGameState(game, GameState.SHOW_RESULTS);
+      await this.sendGameStateToAll();
+    }
+
+    await game.save();
+  }
+
   async getGameState(userName: string) {
     const game = await this.gameService.findOneLean();
 
-    // let voteOptions = null;
-    // if (game.state !== GameState.SELECT_CARD) {
-    //   const usersOrdered = game.users.sort((a, b) => a.voteOrder - b.voteOrder);
-    //   const voteOptions = [];
-    //   for (const user of usersOrdered) {
-    //     const cards = user.handOfCards
-    //       .filter((c) => c.selected !== null)
-    //       .sort((a, b) => a.selected - b.selected)
-    //       .map((c) => c.card.text);
-    //     voteOptions.push(cards);
-    //   }
-    // }
+    let voteOptions = null;
+    if (game.state !== GameState.SELECT_CARD) {
+      const usersOrdered = game.users.sort((a, b) => a.voteOrder - b.voteOrder);
+      voteOptions = [];
+
+      for (const user of usersOrdered) {
+        const cards = user.selectedCards.map((i) => user.cards[i].text);
+        voteOptions.push(cards);
+      }
+    }
+
+    let voteResult = null;
+    if (game.state !== GameState.SHOW_RESULTS) {
+      // TODO
+    }
 
     const user = game.users.find((u) => u.name === userName);
 
@@ -72,7 +105,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         .map((user) => {
           return { name: user.name, points: user.points };
         }),
-      hand: user?.cards.map((c) => c.text),
+      hand: user?.cards?.map((c) => c.text),
       selectedCards: user?.selectedCards,
       question: game.questions[0]
         ? {
@@ -80,9 +113,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             card_number: game.questions[0].num
           }
         : null,
-      gameStarted: game.startedAt !== null
-      // voteOptions,
-      // selectedVoteOption: user.votedFor
+      gameStarted: game.startedAt !== null,
+      voteOptions,
+      selectedVoteOption: user.votedFor,
+      voteResult
     };
   }
 

@@ -59,8 +59,12 @@ export const useStore = defineStore("app", {
       if (payload.selectedCards !== undefined)
         this.selectedCards = payload.selectedCards;
       if (payload.question !== undefined) this.question = payload.question;
-      if (payload.voteOptions !== undefined)
-        this.voteOptions = payload.voteOptions;
+      if (payload.voteOptions !== undefined && payload.voteOptions !== null) {
+        this.voteOptions = [];
+        for (const voteOpt of payload.voteOptions) {
+          this.voteOptions.push(voteOpt);
+        }
+      }
       if (payload.selectedVoteOption !== undefined)
         this.selectedVoteOption = payload.selectedVoteOption;
       if (payload.voteResult !== undefined)

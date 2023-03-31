@@ -13,7 +13,13 @@
           <v-row :no-gutters="true" v-if="store.question">
             <v-col cols="1"></v-col>
             <v-col>
-              <Card :text="store.question?.text" style="margin: 100px 0" />
+              <Card
+                :text="store.question?.text"
+                :light="false"
+                :selectable="false"
+                :faded="false"
+                style="margin: 100px 0"
+              />
             </v-col>
           </v-row>
           <v-row
@@ -49,7 +55,8 @@
           >
             <v-col cols="1"> </v-col>
             <v-col>
-              <VoteOption :cards="vote_option" :idx="idx"> </VoteOption>
+              <VoteOption :cards="vote_option" :idx="idx" @vote="vote(idx)">
+              </VoteOption>
             </v-col>
           </v-row>
           <v-row
@@ -118,6 +125,12 @@ function selectCard(idx: number) {
   if (store.selectedCards.length >= store.question.card_number) {
     socket.emit("selectCards", { cards: store.selectedCards });
   }
+}
+
+function vote(idx: number) {
+  console.log("VOTE", idx);
+  store.selectedVoteOption = idx;
+  socket.emit("vote", { voteOption: store.selectedVoteOption });
 }
 
 const stateText = computed<string>(() => {

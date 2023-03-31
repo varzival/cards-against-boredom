@@ -41,7 +41,10 @@ export class GameService {
     return game;
   }
 
-  async setGameState(game: Game, state: GameState) {}
+  async setGameState(game: GameDocument, state: GameState) {
+    game.state = state;
+    return game.save();
+  }
 
   async findOneOrCreate(): Promise<GameDocument> {
     return this.create();
@@ -75,9 +78,13 @@ export class GameService {
     for (const user of game.users) {
       user.points = 0;
       user.cards = [];
+      user.selectedCards = [];
+      user.voteOrder = null;
+      user.votedFor = null;
     }
 
     game.startedAt = null;
+    game.state = GameState.SELECT_CARD;
 
     await game.save();
 
@@ -105,14 +112,14 @@ export class GameService {
   }
 
   async shuffleVoteOptions(game: GameDocument) {
-    // let idxUsers = Array.from(Array(game.users.length).keys());
-    // idxUsers = this.shuffle(idxUsers);
-    // let i = 0;
-    // for (const idx of idxUsers) {
-    //   game.users[idx].voteOrder = i;
-    //   game.users[idx].votedFor = null;
-    // }
-    // await this.userRepository.save(game.users);
+    let idxUsers = Array.from(Array(game.users.length).keys());
+    idxUsers = this.shuffle(idxUsers);
+    let i = 0;
+    for (const idx of idxUsers) {
+      game.users[idx].voteOrder = i;
+      i++;
+    }
+    return game.save();
   }
 
   async drawCard(game: GameDocument, user: User) {
@@ -137,6 +144,10 @@ export class GameService {
     user.selectedCards = cardIndices;
   }
 
+  async vote(user: User, voteOption: number) {
+    user.votedFor = voteOption;
+  }
+
   allCardsChosen(game: Game) {
     for (const user of game.users) {
       if (user.selectedCards.length < game.questions[0].num) return false;
@@ -144,14 +155,21 @@ export class GameService {
     return true;
   }
 
-  async findOne(): Promise<any> {
+  allVoted(game: Game) {
+    for (const user of game.users) {
+      if (user.votedFor === null) return false;
+    }
+    return true;
+  }
+
+  async findOne(): Promise<GameDocument> {
     return this.gameModel
       .findOne()
       .populate(["cards", "questions", "users.cards"])
       .exec();
   }
 
-  async findOneLean(): Promise<any> {
+  async findOneLean(): Promise<Game> {
     return this.gameModel
       .findOne()
       .populate(["cards", "questions", "users.cards"])

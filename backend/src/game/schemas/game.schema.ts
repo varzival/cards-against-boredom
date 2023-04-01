@@ -9,26 +9,6 @@ export enum GameState {
   SHOW_RESULTS = "SHOW_RESULTS"
 }
 
-/*
-@Schema()
-export class User {
-  @Prop()
-  name: string;
-
-  @Prop({ default: 0 })
-  points: number;
-
-  @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Card" }] })
-  cards: Array<Card>;
-
-  @Prop([SchemaTypes.Number])
-  selectedCards: Array<number>;
-}
-
-
-export const UserSchema = SchemaFactory.createForClass(User);
-*/
-
 export interface User extends Document {
   id: string;
   name: string;
@@ -37,6 +17,7 @@ export interface User extends Document {
   selectedCards: Array<number>;
   voteOrder: number;
   votedFor: number;
+  continue: boolean;
 }
 
 export type GameDocument = HydratedDocument<Game>;
@@ -63,7 +44,8 @@ export class Game {
       },
       selectedCards: [SchemaTypes.Number],
       voteOrder: SchemaTypes.Number,
-      votedFor: SchemaTypes.Number
+      votedFor: SchemaTypes.Number,
+      continue: { type: SchemaTypes.Boolean, default: false }
     })
   ])
   users: Array<User>;

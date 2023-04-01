@@ -1,8 +1,12 @@
-// Utilities
 import { defineStore } from "pinia";
-import { uptime } from "process";
 
+export enum GameState {
+  SELECT_CARD = "SELECT_CARD",
+  VOTE = "VOTE",
+  SHOW_RESULTS = "SHOW_RESULTS"
+}
 export interface State {
+  gameState: GameState;
   name: string;
   question: Question | null;
   players: Array<Player>;
@@ -43,7 +47,8 @@ export const useStore = defineStore("app", {
       voteOptions: null,
       selectedVoteOption: null,
       voteResult: null,
-      readyForNextRound: false
+      readyForNextRound: false,
+      gameState: GameState.SELECT_CARD
     };
   },
   actions: {
@@ -54,6 +59,7 @@ export const useStore = defineStore("app", {
       this.players.push({ name, points: 0 });
     },
     setState(payload: State) {
+      if (payload.gameState !== undefined) this.gameState = payload.gameState;
       if (payload.players !== undefined) this.players = payload.players;
       if (payload.hand !== undefined) this.hand = payload.hand;
       if (payload.selectedCards !== undefined)

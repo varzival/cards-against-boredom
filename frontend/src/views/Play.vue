@@ -23,11 +23,7 @@
             </v-col>
           </v-row>
           <v-row
-            v-if="
-              store.question !== null &&
-              store.voteOptions === null &&
-              store.voteResult === null
-            "
+            v-if="store.gameState === GameState.SELECT_CARD && store.question"
             v-for="(card, idx) in store.hand"
             :key="card"
           >
@@ -48,7 +44,9 @@
             </v-col>
           </v-row>
           <v-row
-            v-if="store.voteOptions !== null && store.voteResult === null"
+            v-if="
+              store.gameState === GameState.VOTE && store.voteOptions !== null
+            "
             v-for="(vote_option, idx) in store.voteOptions"
             :key="idx"
             :class="['vote-option']"
@@ -60,7 +58,11 @@
             </v-col>
           </v-row>
           <v-row
-            v-if="store.voteResult !== null && store.voteOptions !== null"
+            v-if="
+              store.gameState === GameState.SHOW_RESULTS &&
+              store.voteResult !== null &&
+              store.voteOptions !== null
+            "
             v-for="(playerVote, idx) in store.voteResult"
           >
             <v-col cols="1"> </v-col>
@@ -79,8 +81,9 @@
                   <template
                     v-for="(player, idx) in playerVote.players"
                     :key="player"
-                    >{{ player
-                    }}{{
+                    >{{ player }}
+                    {{ player === playerVote.owner ? " (Unerde!) " : "" }}
+                    {{
                       idx < playerVote.players.length - 1 ? ", " : ""
                     }}</template
                   >
@@ -94,7 +97,9 @@
             class="continue-btn"
           >
             <v-col cols="1"></v-col>
-            <v-btn prepend-icon="mdi-arrow-right">Weiter!</v-btn>
+            <v-btn prepend-icon="mdi-arrow-right" @click="continuePlay()"
+              >Weiter!</v-btn
+            >
           </v-row>
         </v-col>
         <v-spacer></v-spacer>
@@ -108,7 +113,7 @@ import Card from "@/components/Card.vue";
 import PlayerOverview from "@/components/PlayerOverview.vue";
 import VoteOption from "@/components/VoteOption.vue";
 import { socket } from "@/socket";
-import { useStore } from "@/store/app";
+import { useStore, GameState } from "@/store/app";
 import { computed } from "vue";
 
 const store = useStore();
@@ -128,20 +133,24 @@ function selectCard(idx: number) {
 }
 
 function vote(idx: number) {
-  console.log("VOTE", idx);
   store.selectedVoteOption = idx;
   socket.emit("vote", { voteOption: store.selectedVoteOption });
 }
 
+function continuePlay() {
+  socket.emit("continue");
+}
+
 const stateText = computed<string>(() => {
-  if (store.voteResult) {
+  if (store.gameState === GameState.SHOW_RESULTS) {
     return "Auswertung";
   }
-  if (store.voteOptions) {
+  if (store.gameState === GameState.VOTE) {
     if (store.selectedVoteOption !== null) return "Warte auf andere Spieler...";
     else return "Stimme für deinen Favoriten!";
   }
-  if (!store.question) return "Warte...";
+  if (!store.question)
+    return "Warte..." + (store.gameStarted ? " Lobby füllt sich..." : "");
   const selectCardText =
     store.question.card_number === 1
       ? "Wähle eine Karte!"

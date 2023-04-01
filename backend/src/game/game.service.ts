@@ -81,6 +81,7 @@ export class GameService {
       user.selectedCards = [];
       user.voteOrder = null;
       user.votedFor = null;
+      user.continue = false;
     }
 
     game.startedAt = null;
@@ -89,6 +90,28 @@ export class GameService {
     await game.save();
 
     return game;
+  }
+
+  async resetGameRound(game: GameDocument) {
+    for (const user of game.users) {
+      for (const i of user.selectedCards) {
+        user.cards.splice(i, 1);
+        await this.drawCard(game, user);
+      }
+
+      user.selectedCards = [];
+      user.continue = false;
+      user.voteOrder = null;
+      user.votedFor = null;
+    }
+  }
+
+  async calculatePoints(game: GameDocument) {
+    for (const user of game.users) {
+      user.points += game.users.filter(
+        (u) => u.votedFor === user.voteOrder && u.name !== user.name
+      ).length;
+    }
   }
 
   async shuffleDeck(game: GameDocument) {
@@ -133,8 +156,6 @@ export class GameService {
     }
   }
 
-  async replaceSelectedCards(game: Game) {}
-
   deselectCards(user: User) {
     user.selectedCards = [];
   }
@@ -158,6 +179,13 @@ export class GameService {
   allVoted(game: Game) {
     for (const user of game.users) {
       if (user.votedFor === null) return false;
+    }
+    return true;
+  }
+
+  allContinue(game: Game) {
+    for (const user of game.users) {
+      if (user.continue === null) return false;
     }
     return true;
   }

@@ -56,12 +56,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage("vote")
   async vote(@ConnectedSocket() client: any, @Body() body: VoteBody) {
     const game = await this.gameService.findOne();
-    const gameLean = await this.gameService.findOneLean();
 
-    if (!gameLean || !gameLean.startedAt)
-      throw new Error("Game has not started yet");
-    if (gameLean.state !== GameState.VOTE)
-      throw new Error(`Game is in the ${gameLean.state} State`);
+    if (!game || !game.startedAt) throw new Error("Game has not started yet");
+    if (game.state !== GameState.VOTE)
+      throw new Error(`Game is in the ${game.state} State`);
 
     const user = game.users.find((u) => u.name === client.handshake.query.name);
     await this.gameService.vote(user, body.voteOption);
@@ -69,18 +67,38 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (this.gameService.allVoted(game)) {
       await this.gameService.setGameState(game, GameState.SHOW_RESULTS);
+      await this.gameService.calculatePoints(game);
+      await game.save();
       await this.sendGameStateToAll();
     }
+  }
 
+  @SubscribeMessage("continue")
+  async continue(@ConnectedSocket() client: any) {
+    const game = await this.gameService.findOne();
+
+    if (!game || !game.startedAt) throw new Error("Game has not started yet");
+    if (game.state !== GameState.SHOW_RESULTS)
+      throw new Error(`Game is in the ${game.state} State`);
+
+    const user = game.users.find((u) => u.name === client.handshake.query.name);
+    user.continue = true;
     await game.save();
+
+    if (this.gameService.allContinue(game)) {
+      await this.gameService.resetGameRound(game);
+      await this.gameService.setGameState(game, GameState.SELECT_CARD);
+      await game.save();
+      await this.sendGameStateToAll();
+    }
   }
 
   async getGameState(userName: string) {
     const game = await this.gameService.findOneLean();
 
     let voteOptions = null;
+    const usersOrdered = game.users.sort((a, b) => a.voteOrder - b.voteOrder);
     if (game.state !== GameState.SELECT_CARD) {
-      const usersOrdered = game.users.sort((a, b) => a.voteOrder - b.voteOrder);
       voteOptions = [];
 
       for (const user of usersOrdered) {
@@ -90,14 +108,26 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     let voteResult = null;
-    if (game.state !== GameState.SHOW_RESULTS) {
-      // TODO
+    if (game.state === GameState.SHOW_RESULTS) {
+      voteResult = [];
+
+      for (const user of usersOrdered) {
+        const votedFor = usersOrdered
+          .filter((u) => u.votedFor === user.voteOrder)
+          .map((u) => u.name);
+        voteResult.push({
+          players: votedFor,
+          vote: user.voteOrder,
+          owner: user.name
+        });
+      }
     }
 
     const user = game.users.find((u) => u.name === userName);
 
     if (!game) return null;
     return {
+      gameState: game.state,
       players: game.users
         .sort((a, b) => {
           return b.points - a.points;

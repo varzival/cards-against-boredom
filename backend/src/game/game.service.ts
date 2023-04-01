@@ -169,21 +169,21 @@ export class GameService {
     user.votedFor = voteOption;
   }
 
-  allCardsChosen(game: Game) {
+  allCardsChosen(game: GameDocument) {
     for (const user of game.users) {
       if (user.selectedCards.length < game.questions[0].num) return false;
     }
     return true;
   }
 
-  allVoted(game: Game) {
+  allVoted(game: GameDocument) {
     for (const user of game.users) {
       if (user.votedFor === null) return false;
     }
     return true;
   }
 
-  allContinue(game: Game) {
+  allContinue(game: GameDocument) {
     for (const user of game.users) {
       if (user.continue === null) return false;
     }

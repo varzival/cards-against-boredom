@@ -185,12 +185,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const game = await this.gameService.findOneOrCreate();
 
     const userName = client.handshake.query.name;
-    //const user = await this.gameService.findUser(client.handshake.query.name);
-    /*if (this.clientByName.get(user.name)) {
-      console.error("User", user.name, "already exists");
-      client.emit("error", user.name + " existiert bereits");
-      return;
-    }*/
+    const user = game.users.find((u) => u.name === userName);
+    for (const [
+      existingClient,
+      existingUserName
+    ] of this.clientByName.entries()) {
+      if (
+        existingUserName === userName &&
+        existingClient.handshake.address !== client.handshake.address
+      ) {
+        this.logger.error(`User ${user.name} already exists`);
+        throw new Error("User exists already");
+      }
+    }
 
     await this.gameService.assignUserToGame(userName, game);
 

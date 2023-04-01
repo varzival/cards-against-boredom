@@ -8,8 +8,8 @@
   <v-main>
     <v-container fluid>
       <v-row>
-        <v-spacer></v-spacer>
-        <v-col cols="auto">
+        <v-col lg="3" cols="1"></v-col>
+        <v-col lg="6" cols="10">
           <v-row :no-gutters="true" v-if="store.question">
             <v-col cols="1"></v-col>
             <v-col>
@@ -102,7 +102,7 @@
             >
           </v-row>
         </v-col>
-        <v-spacer></v-spacer>
+        <v-col lg="3" cols="1"></v-col>
       </v-row>
     </v-container>
   </v-main>
@@ -150,7 +150,7 @@ const stateText = computed<string>(() => {
     else return "Stimme für deinen Favoriten!";
   }
   if (!store.question)
-    return "Warte..." + (store.gameStarted ? " Lobby füllt sich..." : "");
+    return "Warte..." + (!store.gameStarted ? " Lobby füllt sich..." : "");
   const selectCardText =
     store.question.card_number === 1
       ? "Wähle eine Karte!"

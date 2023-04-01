@@ -46,11 +46,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (this.gameService.allCardsChosen(game)) {
       await this.gameService.setGameState(game, GameState.VOTE);
-      await this.gameService.shuffleVoteOptions(game);
+      this.gameService.shuffleVoteOptions(game);
+      await game.save();
       await this.sendGameStateToAll();
     }
-
-    await game.save();
   }
 
   @SubscribeMessage("vote")

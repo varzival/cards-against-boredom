@@ -94,8 +94,8 @@ export class GameService {
 
   async resetGameRound(game: GameDocument) {
     for (const user of game.users) {
-      for (const i of user.selectedCards) {
-        user.cards.splice(i, 1);
+      user.cards = user.cards.filter((_, i) => !user.selectedCards.includes(i));
+      for (const _ of user.selectedCards) {
         await this.drawCard(game, user);
       }
 
@@ -103,6 +103,11 @@ export class GameService {
       user.continue = false;
       user.voteOrder = null;
       user.votedFor = null;
+
+      game.questions.shift();
+      if (!game.questions.length) {
+        await this.shuffleQuestions(game);
+      }
     }
   }
 
@@ -134,7 +139,7 @@ export class GameService {
     }
   }
 
-  async shuffleVoteOptions(game: GameDocument) {
+  shuffleVoteOptions(game: GameDocument) {
     let idxUsers = Array.from(Array(game.users.length).keys());
     idxUsers = this.shuffle(idxUsers);
     let i = 0;
@@ -142,7 +147,6 @@ export class GameService {
       game.users[idx].voteOrder = i;
       i++;
     }
-    return game.save();
   }
 
   async drawCard(game: GameDocument, user: User) {

@@ -68,7 +68,15 @@
             <v-col cols="1"> </v-col>
             <v-col>
               <div class="player-vote-owner">
-                <h2>{{ playerVote.owner }}</h2>
+                <h2>
+                  {{
+                    `${playerVote.owner} - ${pointsForPlayer(
+                      playerVote.owner
+                    )} Punkt${
+                      pointsForPlayer(playerVote.owner) !== 1 ? "e" : ""
+                    }`
+                  }}
+                </h2>
               </div>
               <VoteOption
                 :cards="store.voteOptions[playerVote.vote]"
@@ -115,8 +123,10 @@ import VoteOption from "@/components/VoteOption.vue";
 import { socket } from "@/socket";
 import { useStore, GameState } from "@/store/app";
 import { computed } from "vue";
+import { storeToRefs } from "pinia";
 
 const store = useStore();
+const { pointsForPlayer } = storeToRefs(store);
 
 function selectCard(idx: number) {
   if (!store.question) return;

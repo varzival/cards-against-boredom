@@ -12,6 +12,7 @@
     "@mdi/font": "7.0.96",
     "core-js": "^3.8.3",
     "pinia": "^2.0.23",
+    "pinia-shared-state": "^0.3.0",
     "roboto-fontface": "*",
     "socket.io-client": "^4.6.1",
     "vue": "^3.2.13",

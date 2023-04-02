@@ -80,6 +80,21 @@ export const useStore = defineStore("app", {
         this.readyForNextRound = payload.readyForNextRound;
       if (payload.gameStarted !== undefined)
         this.gameStarted = payload.gameStarted;
+
+      if (payload.gameState === GameState.SHOW_RESULTS) {
+        this.selectedCards = [];
+        this.selectedVoteOption = null;
+      }
+    }
+  },
+  getters: {
+    pointsForPlayer(state) {
+      return (name: string) => {
+        if (!state.voteResult) return 0;
+        const results = state.voteResult.find((r) => r.owner === name);
+        if (!results) return 0;
+        return results.players?.filter((p) => p !== name)?.length ?? 0;
+      };
     }
   }
 });

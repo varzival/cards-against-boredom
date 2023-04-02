@@ -30,7 +30,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @Body() body: SelectCardsBody
   ) {
     const game = await this.gameService.findOne();
-    const gameLean = await this.gameService.findOneLean();
+    let gameLean = await this.gameService.findOneLean();
 
     if (!gameLean || !gameLean.startedAt)
       throw new Error("Game has not started yet");
@@ -43,6 +43,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const user = game.users.find((u) => u.name === client.handshake.query.name);
     await this.gameService.selectCard(user, body.cards);
     await game.save();
+
+    gameLean = await this.gameService.findOneLean();
 
     // MUST BE lean in allCardsChosen
     // TODO find a unified way
@@ -251,6 +253,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new Error("User exists already");
       }
     }
+
+    // TODO deal cards if necessary, make vote options correct
 
     await this.gameService.assignUserToGame(userName, game);
 

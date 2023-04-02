@@ -25,13 +25,11 @@
                 label="Name"
                 :rules="rules"
                 hide-details="auto"
+                @keyup.enter="setName"
               ></v-text-field>
             </v-col>
             <v-col cols="2" align-self="center">
-              <v-btn
-                @click="setName()"
-                :disabled="!name || !(name.length <= 30)"
-              >
+              <v-btn @click="setName" :disabled="!name || !(name.length <= 30)">
                 Los!
               </v-btn>
             </v-col>
@@ -46,6 +44,7 @@
 <script lang="ts" setup>
 import { useStore } from "@/store/app";
 import { ref } from "vue";
+import { set } from "vue-demi";
 
 const store = useStore();
 

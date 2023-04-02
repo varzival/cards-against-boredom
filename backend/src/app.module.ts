@@ -1,31 +1,22 @@
 import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { TypeOrmModule } from "@nestjs/typeorm";
 import { GameModule } from "./game/game.module";
 import { AuthModule } from "./auth/auth.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
 import { MongooseModule } from "@nestjs/mongoose";
+import { ConfigModule } from "@nestjs/config";
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: "postgres",
-      host: "localhost",
-      port: 5432,
-      username: "admin",
-      password: "postgres",
-      database: "cards-against-kern",
-      entities: [__dirname + "/../**/*.entity{.ts,.js}"],
-      synchronize: false
-    }),
+    ConfigModule.forRoot(),
     GameModule,
     AuthModule,
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, "../../../frontend/dist/")
+      rootPath: join(__dirname, "../dist/")
     }),
-    MongooseModule.forRoot("mongodb://localhost/cards-against-kern")
+    MongooseModule.forRoot(process.env.MONGO_DB_CONNECTION_STRING)
   ],
   controllers: [AppController],
   providers: [AppService]

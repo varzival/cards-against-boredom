@@ -173,7 +173,7 @@ export class GameService {
     user.votedFor = voteOption;
   }
 
-  allCardsChosen(game: GameDocument) {
+  allCardsChosen(game: Game) {
     for (const user of game.users) {
       if (user.selectedCards.length < game.questions[0].num) return false;
     }
@@ -189,7 +189,7 @@ export class GameService {
 
   allContinue(game: GameDocument) {
     for (const user of game.users) {
-      if (user.continue === null) return false;
+      if (!user.continue) return false;
     }
     return true;
   }
@@ -224,5 +224,20 @@ export class GameService {
         )
         .exec();
     }
+  }
+
+  async deleteUserFromGame(userName: string, game: GameDocument) {
+    return this.gameModel
+      .updateOne(
+        { _id: game.id },
+        {
+          $pull: {
+            users: {
+              name: userName
+            }
+          }
+        }
+      )
+      .exec();
   }
 }

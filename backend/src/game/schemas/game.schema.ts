@@ -37,7 +37,7 @@ export class Game {
   @Prop([
     raw({
       name: SchemaTypes.String,
-      points: SchemaTypes.Number,
+      points: { type: SchemaTypes.Number, default: 0 },
       cards: {
         type: [{ type: SchemaTypes.ObjectId, ref: "Card" }],
         default: []

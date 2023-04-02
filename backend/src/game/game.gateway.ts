@@ -7,7 +7,7 @@ import {
   ConnectedSocket
 } from "@nestjs/websockets";
 import { GameService } from "./game.service";
-import { GameState } from "./schemas/game.schema";
+import { Game, GameState } from "./schemas/game.schema";
 
 interface SelectCardsBody {
   cards: Array<number>;
@@ -44,7 +44,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await this.gameService.selectCard(user, body.cards);
     await game.save();
 
-    if (this.gameService.allCardsChosen(game)) {
+    // MUST BE lean in allCardsChosen
+    // TODO find a unified way
+    if (this.gameService.allCardsChosen(gameLean)) {
       await this.gameService.setGameState(game, GameState.VOTE);
       this.gameService.shuffleVoteOptions(game);
       await game.save();
@@ -92,6 +94,50 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage("logout")
+  async logout(@ConnectedSocket() client: any) {
+    // TODO handle selected options (keep until round reset?)
+    const game = await this.gameService.findOne();
+    const userName = client.handshake.query.name;
+
+    await this.gameService.deleteUserFromGame(userName, game);
+    await game.save();
+
+    const clientsToDisconnect = [];
+    for (const [
+      existingClient,
+      existingUserName
+    ] of this.clientByName.entries()) {
+      if (existingUserName === userName)
+        clientsToDisconnect.push(existingClient);
+    }
+
+    for (const cl of clientsToDisconnect) {
+      cl.disconnect(0);
+    }
+
+    await this.sendPlayersToAll();
+  }
+
+  getPlayers(game: Game) {
+    const activeUsers = new Set<string>();
+    for (const userName of this.clientByName.values()) {
+      activeUsers.add(userName);
+    }
+
+    return game.users
+      .sort((a, b) => {
+        return b.points - a.points;
+      })
+      .map((user) => {
+        return {
+          name: user.name,
+          points: user.points,
+          active: activeUsers.has(user.name)
+        };
+      });
+  }
+
   async getGameState(userName: string) {
     const game = await this.gameService.findOneLean();
 
@@ -127,13 +173,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!game) return null;
     return {
       gameState: game.state,
-      players: game.users
-        .sort((a, b) => {
-          return b.points - a.points;
-        })
-        .map((user) => {
-          return { name: user.name, points: user.points };
-        }),
+      players: this.getPlayers(game),
       hand: user?.cards?.map((c) => c.text),
       selectedCards: user?.selectedCards,
       question: game.questions[0]
@@ -167,14 +207,28 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  async sendPlayersToAll() {
+    const game = await this.gameService.findOne();
+    for (const [client, userName] of this.clientByName.entries()) {
+      const user = game.users.find((u) => u.name === userName);
+      if (!user) {
+        this.logger.error(`User ${userName} is not connected`);
+        continue;
+      }
+
+      client.emit("gameState", {
+        players: this.getPlayers(game)
+      });
+    }
+  }
+
   async handleDisconnect(client: any, ...args: any[]) {
-    console.log(
-      "Disconnected from",
-      client.handshake.query.name,
-      "id:",
-      client.id
+    this.logger.log(
+      `Disconnected from ${client.handshake.query.name}, id: ${client.id}, from ${client.handshake.address}`
     );
     this.clientByName.delete(client);
+
+    await this.sendGameStateToAll();
   }
 
   async handleConnection(client: any, ...args: any[]) {
@@ -202,9 +256,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const gameState = await this.getGameState(userName);
 
-    this.logger.log(`sending status to ${userName}, clientID ${client.id}`);
-
     client.emit("gameState", gameState);
     this.clientByName.set(client, client.handshake.query.name);
+
+    await this.sendGameStateToAll();
   }
 }

@@ -6,6 +6,12 @@
           <div class="player-row">
             <v-icon icon="mdi-wifi-off" v-if="!player.active"></v-icon>
             <span class="ml-2">{{ player.name }}</span>
+            <v-icon
+              icon="mdi-check"
+              color="green"
+              class="ml-2"
+              v-if="player.selectionMade"
+            ></v-icon>
             <span class="ml-auto">{{ player.points }}</span>
           </div>
         </v-list-item>

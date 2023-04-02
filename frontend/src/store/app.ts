@@ -29,6 +29,7 @@ export interface Player {
   name: string;
   points: number;
   active: boolean;
+  selectionMade: boolean;
 }
 
 export interface Question {
@@ -57,7 +58,12 @@ export const useStore = defineStore("app", {
       this.name = name;
     },
     addPlayer(name: string) {
-      this.players.push({ name, points: 0, active: true });
+      this.players.push({
+        name,
+        points: 0,
+        active: true,
+        selectionMade: false
+      });
     },
     setState(payload: State) {
       if (payload.gameState !== undefined) this.gameState = payload.gameState;

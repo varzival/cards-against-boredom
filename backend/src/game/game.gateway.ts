@@ -53,6 +53,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.gameService.shuffleVoteOptions(game);
       await game.save();
       await this.sendGameStateToAll();
+    } else {
+      await this.sendPlayersToAll();
     }
   }
 
@@ -73,6 +75,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.gameService.calculatePoints(game);
       await game.save();
       await this.sendGameStateToAll();
+    } else {
+      await this.sendPlayersToAll();
     }
   }
 
@@ -93,6 +97,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.gameService.setGameState(game, GameState.SELECT_CARD);
       await game.save();
       await this.sendGameStateToAll();
+    } else {
+      await this.sendPlayersToAll();
     }
   }
 
@@ -127,6 +133,26 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       activeUsers.add(userName);
     }
 
+    const selectionMade = new Set<string>();
+    if (game.questions?.length && game.users?.length) {
+      for (const user of game.users) {
+        switch (game.state) {
+          case GameState.SELECT_CARD:
+            if (user.selectedCards.length >= game.questions[0].num)
+              selectionMade.add(user.name);
+            break;
+          case GameState.VOTE:
+            if (user.votedFor !== null) selectionMade.add(user.name);
+            break;
+          case GameState.SHOW_RESULTS:
+            if (user.continue) selectionMade.add(user.name);
+            break;
+          default:
+            break;
+        }
+      }
+    }
+
     return game.users
       .sort((a, b) => {
         return b.points - a.points;
@@ -135,7 +161,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return {
           name: user.name,
           points: user.points,
-          active: activeUsers.has(user.name)
+          active: activeUsers.has(user.name),
+          selectionMade: selectionMade.has(user.name)
         };
       });
   }
@@ -210,7 +237,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async sendPlayersToAll() {
-    const game = await this.gameService.findOne();
+    const game = await this.gameService.findOneLean();
     for (const [client, userName] of this.clientByName.entries()) {
       const user = game.users.find((u) => u.name === userName);
       if (!user) {

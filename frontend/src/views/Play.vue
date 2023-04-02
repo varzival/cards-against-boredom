@@ -10,95 +10,107 @@
       <v-row>
         <v-col lg="3" cols="1"></v-col>
         <v-col lg="6" cols="10">
-          <v-row :no-gutters="true" v-if="store.question">
-            <v-col cols="1"></v-col>
-            <v-col>
-              <Card
-                :text="store.question?.text"
-                :light="false"
-                :selectable="false"
-                :faded="false"
-                style="margin: 100px 0"
-              />
-            </v-col>
-          </v-row>
-          <v-row
-            v-if="store.gameState === GameState.SELECT_CARD && store.question"
-            v-for="(card, idx) in store.hand"
-            :key="card"
-          >
-            <v-col cols="1" align-self="center" class="card-selection-idx">
-              <h3>{{ getSelectedIdx(idx) }}</h3>
-            </v-col>
-            <v-col>
-              <Card
-                :text="card"
-                light
-                selectable
-                :faded="
-                  store.selectedCards.length >= store.question.card_number &&
-                  !store.selectedCards.includes(idx)
-                "
-                @click="selectCard(idx)"
-              />
-            </v-col>
-          </v-row>
-          <v-row
-            v-if="
-              store.gameState === GameState.VOTE && store.voteOptions !== null
-            "
-            v-for="(vote_option, idx) in store.voteOptions"
-            :key="idx"
-            :class="['vote-option']"
-          >
-            <v-col cols="1"> </v-col>
-            <v-col>
-              <VoteOption :cards="vote_option" :idx="idx" @vote="vote(idx)">
-              </VoteOption>
-            </v-col>
-          </v-row>
-          <v-row
-            v-if="
-              store.gameState === GameState.SHOW_RESULTS &&
-              store.voteResult !== null &&
-              store.voteOptions !== null
-            "
-            v-for="(playerVote, idx) in store.voteResult"
-          >
-            <v-col cols="1"> </v-col>
-            <v-col>
-              <div class="player-vote-owner">
-                <h2>
-                  {{
-                    `${playerVote.owner} - ${pointsForPlayer(
-                      playerVote.owner
-                    )} Punkt${
-                      pointsForPlayer(playerVote.owner) !== 1 ? "e" : ""
-                    }`
-                  }}
-                </h2>
-              </div>
-              <VoteOption
-                :cards="store.voteOptions[playerVote.vote]"
-                :idx="idx"
-                :selectable="false"
-              >
-              </VoteOption>
-              <div class="player-vote-players">
-                <h3>
-                  <template
-                    v-for="(player, idx) in playerVote.players"
-                    :key="player"
-                    >{{ player }}
-                    {{ player === playerVote.owner ? " (Unerde!) " : "" }}
+          <Transition name="card" mode="out-in" appear>
+            <v-row
+              :no-gutters="true"
+              v-if="store.question"
+              :key="store.question?.text"
+            >
+              <v-col cols="1"></v-col>
+              <v-col>
+                <Card
+                  :text="store.question?.text"
+                  :light="false"
+                  :selectable="false"
+                  :faded="false"
+                  style="margin: 100px 0"
+                />
+              </v-col>
+            </v-row>
+          </Transition>
+          <TransitionGroup name="card" mode="out-in" appear>
+            <v-row
+              v-if="store.gameState === GameState.SELECT_CARD && store.question"
+              v-for="(card, idx) in store.hand"
+              :key="card"
+            >
+              <v-col cols="1" align-self="center" class="card-selection-idx">
+                <h3>{{ getSelectedIdx(idx) }}</h3>
+              </v-col>
+              <v-col>
+                <Card
+                  :text="card"
+                  light
+                  selectable
+                  :faded="
+                    store.selectedCards.length >= store.question.card_number &&
+                    !store.selectedCards.includes(idx)
+                  "
+                  @click="selectCard(idx)"
+                />
+              </v-col>
+            </v-row>
+          </TransitionGroup>
+          <TransitionGroup name="card" mode="out-in" appear>
+            <v-row
+              v-if="
+                store.gameState === GameState.VOTE && store.voteOptions !== null
+              "
+              v-for="(vote_option, idx) in store.voteOptions"
+              :key="idx"
+              :class="['vote-option']"
+            >
+              <v-col cols="1"> </v-col>
+              <v-col>
+                <VoteOption :cards="vote_option" :idx="idx" @vote="vote(idx)">
+                </VoteOption>
+              </v-col>
+            </v-row>
+          </TransitionGroup>
+          <TransitionGroup name="card" mode="out-in" appear>
+            <v-row
+              v-if="
+                store.gameState === GameState.SHOW_RESULTS &&
+                store.voteResult !== null &&
+                store.voteOptions !== null
+              "
+              v-for="(playerVote, idx) in store.voteResult"
+            >
+              <v-col cols="1"> </v-col>
+              <v-col>
+                <div class="player-vote-owner">
+                  <h2>
                     {{
-                      idx < playerVote.players.length - 1 ? ", " : ""
-                    }}</template
-                  >
-                </h3>
-              </div>
-            </v-col>
-          </v-row>
+                      `${playerVote.owner} - ${pointsForPlayer(
+                        playerVote.owner
+                      )} Punkt${
+                        pointsForPlayer(playerVote.owner) !== 1 ? "e" : ""
+                      }`
+                    }}
+                  </h2>
+                </div>
+                <VoteOption
+                  :cards="store.voteOptions[playerVote.vote]"
+                  :idx="idx"
+                  :selectable="false"
+                >
+                </VoteOption>
+                <div class="player-vote-players">
+                  <h3>
+                    <template
+                      v-for="(player, idx) in playerVote.players"
+                      :key="player"
+                      >{{ player }}
+                      {{ player === playerVote.owner ? " (Unerde!) " : "" }}
+                      {{
+                        idx < playerVote.players.length - 1 ? ", " : ""
+                      }}</template
+                    >
+                  </h3>
+                </div>
+              </v-col>
+            </v-row>
+          </TransitionGroup>
           <v-row
             v-if="store.voteResult !== null && store.voteOptions !== null"
             justify="center"
@@ -201,5 +213,37 @@ function getSelectedIdx(idx: number): string {
 
 .continue-btn {
   margin-top: 50px;
+}
+
+.card-enter-active {
+  animation: bounce-in 0.5s;
+}
+
+.card-leave-active {
+  position: relative;
+  animation: fade-left 0.5s;
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-left {
+  0% {
+    right: 0;
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    right: 300px;
+  }
 }
 </style>

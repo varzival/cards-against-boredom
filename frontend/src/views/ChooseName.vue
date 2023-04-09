@@ -11,12 +11,12 @@
       <v-row align="center" justify="center" style="margin-bottom: 100px">
         <v-spacer></v-spacer>
         <v-col>
-          <h1 style="font-size: 250px">KERN</h1>
+          <h1 style="font-size: calc(100px + 5vw)">KERN</h1>
         </v-col>
         <v-spacer></v-spacer>
       </v-row>
       <v-row>
-        <v-col></v-col>
+        <v-col cols="0" md="4"></v-col>
         <v-col>
           <v-row class="name-input" align="center">
             <v-col cols="10" align-self="center">
@@ -35,7 +35,7 @@
             </v-col>
           </v-row>
         </v-col>
-        <v-col></v-col>
+        <v-col cols="0" md="4"></v-col>
       </v-row>
     </v-container>
   </v-main>
@@ -44,8 +44,10 @@
 <script lang="ts" setup>
 import { useStore } from "@/store/app";
 import { ref } from "vue";
+import { useDisplay } from "vuetify/lib/framework.mjs";
 
 const store = useStore();
+const { mobile } = useDisplay();
 
 const name = ref("");
 
@@ -86,7 +88,7 @@ h1 {
 
 h2 {
   position: relative;
-  top: -100px;
+  top: -200px;
   animation: 1s ease-out 0.5s 1 slideInFromTop;
   animation-fill-mode: forwards;
 }

@@ -139,6 +139,7 @@ const { pointsForPlayer } = storeToRefs(store);
 function selectCard(idx: number) {
   if (!store.question) return;
   if (store.selectedCards.length < store.question.card_number) {
+    if (store.selectedCards.includes(idx)) store.selectedCards = [];
     store.selectedCards.push(idx);
   } else {
     store.selectedCards = [];

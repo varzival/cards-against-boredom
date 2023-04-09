@@ -44,7 +44,6 @@
 <script lang="ts" setup>
 import { useStore } from "@/store/app";
 import { ref } from "vue";
-import { set } from "vue-demi";
 
 const store = useStore();
 

@@ -12,7 +12,7 @@
     >
     </v-alert>
     <v-container fluid>
-      <v-row v-if="isAdmin">
+      <v-row v-if="isAdmin && store.name">
         <v-col cols="0" md="4"></v-col>
         <v-col cols="12" md="4" align="center">
           <template v-if="store.gameStarted">
@@ -28,6 +28,23 @@
       <v-row v-else justify="start">
         <v-col cols="0" md="4"></v-col>
         <v-col cols="12" md="4">
+          <v-row
+            v-if="!store.name"
+            class="name-input"
+            align="center"
+            justify="center"
+          >
+            <v-col cols="12" md="10">
+              <v-text-field
+                v-model="name"
+                label="Name"
+                :rules="rules"
+                hide-details="auto"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="0" md="2"></v-col>
+          </v-row>
+
           <v-row class="name-input" align="center" justify="center">
             <v-col cols="12" md="10" align-self="center">
               <v-text-field
@@ -62,6 +79,7 @@ import { onMounted, ref } from "vue";
 
 const store = useStore();
 const adminPwd = ref("");
+const name = ref("");
 const isAdmin = ref(false);
 const showAlert = ref(false);
 
@@ -71,6 +89,8 @@ const rules = ref([
 ]);
 
 async function login() {
+  if (name.value) store.setName(name.value);
+
   try {
     await fetch("/api/auth/login", {
       method: "POST",

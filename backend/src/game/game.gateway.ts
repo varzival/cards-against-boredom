@@ -37,11 +37,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (gameLean.state !== GameState.SELECT_CARD)
       throw new Error(`Game is in the ${gameLean.state} State`);
     if (!gameLean.questions[0]) throw new Error("No question chosen");
-    if (gameLean.questions[0].num !== body.cards?.length)
+
+    let uniqueCards = body?.cards;
+    if (!uniqueCards) throw new Error("No cards chosen");
+    uniqueCards = [...new Set(uniqueCards)];
+    if (uniqueCards.length !== body.cards?.length)
+      throw new Error("Duplicate cards chosen");
+
+    if (gameLean.questions[0].num !== uniqueCards.length)
       throw new Error("Not the right amount of cards chosen");
 
     const user = game.users.find((u) => u.name === client.handshake.query.name);
-    await this.gameService.selectCard(user, body.cards);
+    await this.gameService.selectCard(user, uniqueCards);
     await game.save();
 
     gameLean = await this.gameService.findOneLean();
@@ -197,7 +204,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     }
 
-    const user = game.users.find((u) => u.name === userName);
+    const user = game.users?.find((u) => u.name === userName);
 
     if (!game) return null;
     return {
@@ -213,7 +220,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         : null,
       gameStarted: game.startedAt !== null,
       voteOptions,
-      selectedVoteOption: user.votedFor,
+      selectedVoteOption: user?.votedFor,
       voteResult
     };
   }

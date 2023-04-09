@@ -1,9 +1,5 @@
 <template>
-  <PlayerOverview></PlayerOverview>
-
-  <v-app-bar app>
-    <h1 style="margin-left: auto; margin-right: auto">{{ stateText }}</h1>
-  </v-app-bar>
+  <AppBar :text="stateText"> </AppBar>
 
   <v-main>
     <v-container fluid>
@@ -130,12 +126,12 @@
 
 <script lang="ts" setup>
 import Card from "@/components/Card.vue";
-import PlayerOverview from "@/components/PlayerOverview.vue";
 import VoteOption from "@/components/VoteOption.vue";
 import { socket } from "@/socket";
 import { useStore, GameState } from "@/store/app";
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
+import AppBar from "@/components/AppBar.vue";
 
 const store = useStore();
 const { pointsForPlayer } = storeToRefs(store);

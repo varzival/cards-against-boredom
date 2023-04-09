@@ -1,9 +1,5 @@
 <template>
-  <PlayerOverview></PlayerOverview>
-
-  <v-app-bar app>
-    <h1 style="margin-left: auto; margin-right: auto">Adminbereich</h1>
-  </v-app-bar>
+  <AppBar text="Adminbereich"> </AppBar>
 
   <v-main>
     <v-alert
@@ -22,10 +18,10 @@
           <template v-if="store.gameStarted">
             <h2>Spiel läuft!</h2>
             <div style="margin-top: 10px">
-              <v-btn @click="stopGame()"> Spiel stoppen! </v-btn>
+              <v-btn @click="stopGame"> Spiel stoppen! </v-btn>
             </div>
           </template>
-          <v-btn v-else @click="startGame()"> Spiel starten! </v-btn>
+          <v-btn v-else @click="startGame"> Spiel starten! </v-btn>
         </v-col>
         <v-col cols="0" md="4"></v-col>
       </v-row>
@@ -35,6 +31,7 @@
           <v-row class="name-input" align="center" justify="center">
             <v-col cols="12" md="10" align-self="center">
               <v-text-field
+                @keyup.enter="login"
                 v-model="adminPwd"
                 type="password"
                 label="Passwort"
@@ -44,7 +41,7 @@
             </v-col>
             <v-col cols="12" md="2" align-self="center">
               <v-btn
-                @click="login()"
+                @click="login"
                 :disabled="!adminPwd || !(adminPwd.length <= 30)"
               >
                 Los!
@@ -59,7 +56,7 @@
 </template>
 
 <script lang="ts" setup>
-import PlayerOverview from "@/components/PlayerOverview.vue";
+import AppBar from "@/components/AppBar.vue";
 import { useStore } from "@/store/app";
 import { onMounted, ref } from "vue";
 

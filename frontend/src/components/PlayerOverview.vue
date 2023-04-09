@@ -1,5 +1,9 @@
 <template>
-  <v-navigation-drawer app>
+  <v-navigation-drawer
+    app
+    :modelValue="modelValue"
+    @update:modelValue="(newValue) => emit('update:modelValue', newValue)"
+  >
     <div class="container">
       <v-list>
         <v-list-item v-for="player in store.players" :key="player.name">
@@ -30,6 +34,12 @@ import { useStore } from "@/store/app";
 import { socket } from "@/socket";
 
 const store = useStore();
+
+const emit = defineEmits<{
+  (e: "update:modelValue", value: boolean): void;
+}>();
+
+const { modelValue } = defineProps<{ modelValue: boolean }>();
 
 function logout() {
   socket.emit("logout");

@@ -2,7 +2,7 @@
   <v-app>
     <router-view></router-view>
 
-    <v-footer app>
+    <v-footer app v-if="!mobile">
       <div class="footer-text">ERDKERN Productions</div>
     </v-footer>
   </v-app>
@@ -12,7 +12,9 @@
 import { nextTick, onMounted, watch } from "vue";
 import { createSocket, socket } from "./socket";
 import { State, useStore } from "./store/app";
+import { useDisplay } from "vuetify";
 
+const { mobile } = useDisplay();
 const store = useStore();
 
 function initSocket() {

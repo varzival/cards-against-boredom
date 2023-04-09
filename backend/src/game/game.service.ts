@@ -217,7 +217,13 @@ export class GameService {
           {
             $push: {
               users: {
-                name: userName
+                name: userName,
+                points: 0,
+                cards: [],
+                selectedCards: [],
+                voteOrder: null,
+                votedFor: null,
+                continue: false
               }
             }
           }

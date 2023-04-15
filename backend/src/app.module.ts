@@ -7,6 +7,7 @@ import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule } from "@nestjs/config";
+import { CardsModule } from './cards/cards.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { ConfigModule } from "@nestjs/config";
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, "../dist/")
     }),
-    MongooseModule.forRoot(process.env.MONGO_DB_CONNECTION_STRING)
+    MongooseModule.forRoot(process.env.MONGO_DB_CONNECTION_STRING),
+    CardsModule
   ],
   controllers: [AppController],
   providers: [AppService]

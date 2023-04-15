@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Model } from "mongoose";
 import { GameDocument, GameState, Game, User } from "./schemas/game.schema";
 import { InjectModel } from "@nestjs/mongoose";
-import { Card } from "./schemas/card.schema";
+import { Card } from "../cards/schemas/card.schema";
 import { Question } from "./schemas/question.schema";
 
 @Injectable()

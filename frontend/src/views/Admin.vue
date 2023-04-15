@@ -23,9 +23,14 @@
     <AdminEditDialog
       :modelValue="!!selectedCard"
       @update:modelValue="(newValue) => (selectedCard = newValue)"
+      @save="
+        () => {
+          if (selectedCard) updateCard(selectedCard._id, selectedCard.text);
+        }
+      "
     >
       <template v-slot:title
-        ><h3>Karte {{ selectedCard ? selectedCard.id : "" }}</h3>
+        ><h3>Karte {{ selectedCard ? selectedCard._id : "" }}</h3>
       </template>
 
       <template v-slot:text>
@@ -44,7 +49,7 @@
       @update:modelValue="(newValue) => (selectedQuestion = newValue)"
     >
       <template v-slot:title
-        ><h3>Karte {{ selectedQuestion ? selectedQuestion.id : "" }}</h3>
+        ><h3>Karte {{ selectedQuestion ? selectedQuestion._id : "" }}</h3>
       </template>
 
       <template v-slot:text>
@@ -83,20 +88,27 @@
               <v-btn v-else @click="startGame"> Spiel starten! </v-btn>
             </div>
             <div v-if="tab == 'cards'">
-              <v-row v-for="card in cards" :key="card.id">
+              <v-row v-for="card in cards" :key="card._id">
                 <v-col>
                   <Card
                     :text="card.text"
                     :light="true"
                     :selectable="true"
                     :faded="false"
-                    @click="selectCard(card.id)"
+                    @click="selectCard(card._id)"
                   />
                 </v-col>
               </v-row>
+              <v-row>
+                <v-progress-linear
+                  v-if="!allCardsLoaded"
+                  indeterminate
+                  color="yellow darken-2"
+                ></v-progress-linear>
+              </v-row>
             </div>
             <div v-if="tab == 'questions'">
-              <v-row v-for="question in questions" :key="question.id">
+              <v-row v-for="question in questions" :key="question._id">
                 <v-col cols="1" align-self="center" class="question-num">
                   <h3>{{ question.num }}</h3>
                 </v-col>
@@ -106,9 +118,16 @@
                     :light="false"
                     :selectable="true"
                     :faded="false"
-                    @click="selectQuestion(question.id)"
+                    @click="selectQuestion(question._id)"
                   />
                 </v-col>
+              </v-row>
+              <v-row>
+                <v-progress-linear
+                  v-if="!allQuestionsLoaded"
+                  indeterminate
+                  color="yellow darken-2"
+                ></v-progress-linear>
               </v-row>
             </div>
           </div>
@@ -179,34 +198,94 @@ const name = ref("");
 const isAdmin = ref(false);
 const showAlert = ref(false);
 const tab = ref("game");
-const cards = ref<Array<{ id: string; text: string }>>([
-  { id: "1", text: "test 1" },
-  { id: "2", text: "test 2" },
-  { id: "3", text: "test 3" }
-]);
-const questions = ref<Array<{ id: string; num: number; text: string }>>([
-  { id: "1", num: 1, text: "test 1" },
-  { id: "2", num: 2, text: "test 2" },
-  { id: "3", num: 3, text: "test 3" }
-]);
-const selectedCard = ref<{ id: string; text: string } | null>(null);
-const selectedQuestion = ref<{ id: string; num: number; text: string } | null>(
+
+const cards = ref<Array<{ _id: string; text: string }>>([]);
+const cardsPage = ref<number>(0);
+const selectedCard = ref<{ _id: string; text: string } | null>(null);
+const allCardsLoaded = ref<boolean>(false);
+
+const questions = ref<Array<{ _id: string; num: number; text: string }>>([]);
+const questionsPage = ref<number>(0);
+const selectedQuestion = ref<{ _id: string; num: number; text: string } | null>(
   null
 );
+const allQuestionsLoaded = ref<boolean>(false);
 
 function selectCard(id: string) {
-  selectedCard.value = cards.value.find((c) => c.id === id) ?? {
-    id: "",
-    text: ""
-  };
+  const card = cards.value.find((c) => c._id === id);
+  if (card)
+    selectedCard.value = {
+      _id: card._id,
+      text: card.text
+    };
 }
 
 function selectQuestion(id: string) {
-  selectedQuestion.value = questions.value.find((c) => c.id === id) ?? {
-    id: "",
+  selectedQuestion.value = questions.value.find((c) => c._id === id) ?? {
+    _id: "",
     text: "",
     num: 1
   };
+}
+
+onMounted(() => {
+  loadCards();
+  loadQuestions();
+});
+
+window.onscroll = () => {
+  let bottomOfWindow =
+    document.documentElement.scrollTop + window.innerHeight ===
+    document.documentElement.offsetHeight;
+
+  if (bottomOfWindow) {
+    if (tab.value === "cards") {
+      loadCards();
+    } else if (tab.value === "questions") {
+      loadQuestions();
+    }
+  }
+};
+
+async function loadCards() {
+  if (allCardsLoaded.value) return;
+  const response = await fetch(`/api/cards?perPage=10&page=${cardsPage.value}`);
+  const newCards = await response.json();
+  cards.value = cards.value.concat(newCards);
+  cardsPage.value += 1;
+  if (!newCards.length) allCardsLoaded.value = true;
+}
+
+async function updateCard(id: string, text: string) {
+  const response = await fetch(`/api/cards/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      text
+    })
+  });
+  const card = await response.json();
+  const idx = cards.value.findIndex((c) => c._id === card._id);
+  if (idx > -1) {
+    cards.value.splice(idx, 1, {
+      _id: card._id,
+      text: card.text
+    });
+  }
+  selectedCard.value = null;
+}
+
+async function loadQuestions() {
+  if (allQuestionsLoaded.value) return;
+  const response = await fetch(
+    `/api/questions?perPage=10&page=${questionsPage.value}`
+  );
+  const newQuestions = await response.json();
+  questions.value = questions.value.concat(newQuestions);
+  questionsPage.value += 1;
+  if (!newQuestions.length) allQuestionsLoaded.value = true;
 }
 
 const rules = ref([

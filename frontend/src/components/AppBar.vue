@@ -11,6 +11,10 @@
       @click.stop="drawer = !drawer"
     ></v-app-bar-nav-icon>
     <h1 style="margin-left: auto; margin-right: auto">{{ text }}</h1>
+
+    <template v-slot:extension>
+      <slot></slot>
+    </template>
   </v-app-bar>
 </template>
 

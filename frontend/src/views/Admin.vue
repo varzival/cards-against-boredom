@@ -19,6 +19,55 @@
       style="position: absolute; top: 10vh; right: 5vw; z-index: 9999999"
     >
     </v-alert>
+
+    <AdminEditDialog
+      :modelValue="!!selectedCard"
+      @update:modelValue="(newValue) => (selectedCard = newValue)"
+    >
+      <template v-slot:title
+        ><h3>Karte {{ selectedCard ? selectedCard.id : "" }}</h3>
+      </template>
+
+      <template v-slot:text>
+        <v-textarea
+          v-if="selectedCard"
+          filled
+          label="Text"
+          auto-grow
+          v-model="selectedCard.text"
+        ></v-textarea>
+      </template>
+    </AdminEditDialog>
+
+    <AdminEditDialog
+      :modelValue="!!selectedQuestion"
+      @update:modelValue="(newValue) => (selectedQuestion = newValue)"
+    >
+      <template v-slot:title
+        ><h3>Karte {{ selectedQuestion ? selectedQuestion.id : "" }}</h3>
+      </template>
+
+      <template v-slot:text>
+        <v-textarea
+          v-if="selectedQuestion"
+          filled
+          label="Text"
+          auto-grow
+          v-model="selectedQuestion.text"
+        ></v-textarea>
+
+        <v-slider
+          v-if="selectedQuestion"
+          v-model="selectedQuestion.num"
+          label="# Karten"
+          min="1"
+          max="3"
+          step="1"
+          thumb-label
+        ></v-slider>
+      </template>
+    </AdminEditDialog>
+
     <v-container fluid>
       <v-row v-if="isAdmin && store.name">
         <v-col cols="1" md="4"></v-col>
@@ -41,6 +90,7 @@
                     :light="true"
                     :selectable="true"
                     :faded="false"
+                    @click="selectCard(card.id)"
                   />
                 </v-col>
               </v-row>
@@ -56,6 +106,7 @@
                     :light="false"
                     :selectable="true"
                     :faded="false"
+                    @click="selectQuestion(question.id)"
                   />
                 </v-col>
               </v-row>
@@ -116,6 +167,7 @@
 </template>
 
 <script lang="ts" setup>
+import AdminEditDialog from "@/components/AdminEditDialog.vue";
 import AppBar from "@/components/AppBar.vue";
 import Card from "@/components/Card.vue";
 import { useStore } from "@/store/app";
@@ -137,6 +189,25 @@ const questions = ref<Array<{ id: string; num: number; text: string }>>([
   { id: "2", num: 2, text: "test 2" },
   { id: "3", num: 3, text: "test 3" }
 ]);
+const selectedCard = ref<{ id: string; text: string } | null>(null);
+const selectedQuestion = ref<{ id: string; num: number; text: string } | null>(
+  null
+);
+
+function selectCard(id: string) {
+  selectedCard.value = cards.value.find((c) => c.id === id) ?? {
+    id: "",
+    text: ""
+  };
+}
+
+function selectQuestion(id: string) {
+  selectedQuestion.value = questions.value.find((c) => c.id === id) ?? {
+    id: "",
+    text: "",
+    num: 1
+  };
+}
 
 const rules = ref([
   (value: string) => !!value || "Required.",

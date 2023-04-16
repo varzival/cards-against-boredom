@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { useStorage } from "@vueuse/core";
 
 export enum GameState {
   SELECT_CARD = "SELECT_CARD",
@@ -37,10 +38,13 @@ export interface Question {
   card_number: number;
 }
 
+// https://stackoverflow.com/q/43080547
+type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
+
 export const useStore = defineStore("app", {
-  state(): State {
+  state(): Overwrite<State, { name: any }> {
     return {
-      name: "",
+      name: useStorage("name", ""),
       players: [],
       hand: [],
       selectedCards: [],

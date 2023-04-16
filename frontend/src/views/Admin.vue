@@ -101,6 +101,9 @@
             <div v-if="tab === 'game'">
               <template v-if="store.gameStarted">
                 <h2>Spiel läuft!</h2>
+                <div class="ma-5">
+                  <h3><a href="/" target="_blank">zum Spiel</a></h3>
+                </div>
                 <div style="margin-top: 10px">
                   <v-btn @click="stopGame"> Spiel stoppen! </v-btn>
                 </div>

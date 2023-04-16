@@ -13,6 +13,7 @@ import { nextTick, onMounted, watch } from "vue";
 import { createSocket, socket } from "./socket";
 import { State, useStore } from "./store/app";
 import { useDisplay } from "vuetify";
+import { delete_cookie } from "./utils/cookies";
 
 const { mobile } = useDisplay();
 const store = useStore();
@@ -22,6 +23,12 @@ function initSocket() {
   if (!socket.connected) socket.connect();
   socket.on("gameState", (payload: State) => {
     store.setState(payload);
+  });
+
+  socket.on("kick", () => {
+    store.$reset();
+    store.name = ""; // necessary because of vueuse
+    delete_cookie("session", "/", window.location.hostname);
   });
 }
 

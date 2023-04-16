@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { AdminGuard } from "../auth/admin.guard";
 import { GameGateway } from "./game.gateway";
 import { GameService } from "./game.service";
@@ -24,5 +24,14 @@ export class GameController {
     const game = await this.gameService.findOne();
     await this.gameService.stop(game);
     await this.gameGateway.sendGameStateToAll();
+  }
+
+  @UseGuards(AdminGuard)
+  @Post("kick")
+  async kick(@Body("name") name: string) {
+    const game = await this.gameService.findOne();
+    await this.gameGateway.sendKick(name);
+    await this.gameService.deleteUserFromGame(name, game);
+    await this.gameGateway.sendPlayersToAll();
   }
 }

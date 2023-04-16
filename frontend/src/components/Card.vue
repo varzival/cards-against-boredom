@@ -46,6 +46,7 @@ const classes = computed(() => {
 <style scoped>
 .card {
   transition: 1s;
+  margin: auto;
 }
 
 .card-light {

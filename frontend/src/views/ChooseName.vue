@@ -44,10 +44,8 @@
 <script lang="ts" setup>
 import { useStore } from "@/store/app";
 import { ref } from "vue";
-import { useDisplay } from "vuetify/lib/framework.mjs";
 
 const store = useStore();
-const { mobile } = useDisplay();
 
 const name = ref("");
 

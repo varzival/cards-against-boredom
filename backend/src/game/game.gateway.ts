@@ -258,6 +258,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  async sendKick(name: string) {
+    for (const [client, userName] of this.clientByName.entries()) {
+      if (userName === name) {
+        client.emit("kick");
+
+        this.clientByName.delete(client);
+      }
+    }
+  }
+
   async handleDisconnect(client: any, ...args: any[]) {
     this.logger.log(
       `Disconnected from ${client.handshake.query.name}, id: ${client.id}, from ${client.handshake.address}`

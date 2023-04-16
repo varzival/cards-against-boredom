@@ -1,5 +1,5 @@
 <template>
-  <AppBar :text="stateText"> </AppBar>
+  <AppBar :text="stateText" :hideTabs="true"></AppBar>
 
   <v-main>
     <v-container fluid>
@@ -19,7 +19,7 @@
                   :light="false"
                   :selectable="false"
                   :faded="false"
-                  style="margin: 100px 0"
+                  style="margin: 100px auto"
                 />
               </v-col>
             </v-row>

@@ -8,6 +8,16 @@
       <v-list>
         <v-list-item v-for="player in store.players" :key="player.name">
           <div class="player-row">
+            <v-btn
+              v-if="!(player.name === store.name) && admin"
+              icon
+              variant="outlined"
+              size="small"
+              color="red"
+              class="mr-2"
+              @click="kick(player.name)"
+              ><v-icon icon="mdi-karate"></v-icon
+            ></v-btn>
             <v-icon icon="mdi-wifi-off" v-if="!player.active"></v-icon>
             <span class="ml-2">{{ player.name }}</span>
             <v-icon
@@ -32,6 +42,7 @@
 <script lang="ts" setup>
 import { useStore } from "@/store/app";
 import { socket } from "@/socket";
+import { delete_cookie } from "@/utils/cookies";
 
 const store = useStore();
 
@@ -39,30 +50,29 @@ const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
 }>();
 
-const { modelValue } = defineProps<{ modelValue: boolean }>();
-
-function get_cookie(name: string) {
-  return document.cookie.split(";").some((c) => {
-    return c.trim().startsWith(name + "=");
-  });
-}
-
-function delete_cookie(name: string, path: string, domain: string) {
-  if (get_cookie(name)) {
-    document.cookie =
-      name +
-      "=" +
-      (path ? ";path=" + path : "") +
-      (domain ? ";domain=" + domain : "") +
-      ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
-  }
-}
+const { modelValue, admin } = withDefaults(
+  defineProps<{ modelValue: boolean; admin?: boolean }>(),
+  { admin: false }
+);
 
 function logout() {
   socket.emit("logout");
   store.$reset();
   store.name = ""; // necessary because of vueuse
   delete_cookie("session", "/", window.location.hostname);
+}
+
+async function kick(name: string) {
+  await fetch("/api/game/kick", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name
+    })
+  });
 }
 </script>
 
@@ -79,5 +89,6 @@ function logout() {
   display: flex;
   width: 100%;
   justify-content: space-between;
+  align-items: center;
 }
 </style>

@@ -50,10 +50,10 @@ const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
 }>();
 
-const { modelValue, admin } = withDefaults(
-  defineProps<{ modelValue: boolean; admin?: boolean }>(),
-  { admin: false }
-);
+const { modelValue, admin } = defineProps<{
+  modelValue: boolean;
+  admin: boolean;
+}>();
 
 function logout() {
   socket.emit("logout");

@@ -1,5 +1,5 @@
 <template>
-  <AppBar :text="stateText" :hideTabs="true"></AppBar>
+  <AppBar :text="stateText" :admin="false" :hideTabs="true"></AppBar>
 
   <v-main>
     <v-container fluid>

@@ -1,5 +1,5 @@
 <template>
-  <AppBar text="Adminbereich" :admin="true">
+  <AppBar text="Adminbereich" :admin="true" :hideTabs="false">
     <div v-if="isAdmin && store.name" class="tabs">
       <v-tabs v-model="tab" align-with-title grow>
         <v-tab value="game">Spiel</v-tab>

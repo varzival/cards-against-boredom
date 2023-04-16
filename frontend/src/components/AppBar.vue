@@ -30,7 +30,7 @@ const { mobile } = useDisplay();
 
 const { text, admin, hideTabs } = withDefaults(
   defineProps<{ text: string; admin?: boolean; hideTabs?: boolean }>(),
-  { admin: false, hideTabs: false }
+  { text: "", admin: false, hideTabs: false }
 );
 
 const drawer = ref(!mobile.value);

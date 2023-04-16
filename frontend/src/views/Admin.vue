@@ -21,11 +21,20 @@
     </v-alert>
 
     <AdminEditDialog
+      :id="selectedCard ? selectedCard._id : null"
       :modelValue="!!selectedCard"
       @update:modelValue="(newValue) => (selectedCard = newValue)"
       @save="
         () => {
-          if (selectedCard) updateCard(selectedCard._id, selectedCard.text);
+          if (selectedCard && selectedCard._id)
+            updateCard(selectedCard._id, selectedCard.text);
+          else if (selectedCard && !selectedCard._id)
+            createCard(selectedCard.text);
+        }
+      "
+      @delete="
+        () => {
+          if (selectedCard && selectedCard._id) deleteCard(selectedCard._id);
         }
       "
     >
@@ -45,6 +54,7 @@
     </AdminEditDialog>
 
     <AdminEditDialog
+      :id="selectedQuestion ? selectedQuestion._id : null"
       :modelValue="!!selectedQuestion"
       @update:modelValue="(newValue) => (selectedQuestion = newValue)"
     >
@@ -88,6 +98,17 @@
               <v-btn v-else @click="startGame"> Spiel starten! </v-btn>
             </div>
             <div v-if="tab == 'cards'">
+              <v-row>
+                <v-col>
+                  <Card
+                    :yellow="true"
+                    :light="true"
+                    :selectable="true"
+                    :faded="false"
+                    @click="selectNewCard"
+                  />
+                </v-col>
+              </v-row>
               <v-row v-for="card in cards" :key="card._id">
                 <v-col>
                   <Card
@@ -211,6 +232,13 @@ const selectedQuestion = ref<{ _id: string; num: number; text: string } | null>(
 );
 const allQuestionsLoaded = ref<boolean>(false);
 
+function selectNewCard() {
+  selectedCard.value = {
+    _id: "",
+    text: ""
+  };
+}
+
 function selectCard(id: string) {
   const card = cards.value.find((c) => c._id === id);
   if (card)
@@ -228,9 +256,10 @@ function selectQuestion(id: string) {
   };
 }
 
-onMounted(() => {
+onMounted(async () => {
   loadCards();
   loadQuestions();
+  isAdmin.value = await isAdminCheck();
 });
 
 window.onscroll = () => {
@@ -254,6 +283,40 @@ async function loadCards() {
   cards.value = cards.value.concat(newCards);
   cardsPage.value += 1;
   if (!newCards.length) allCardsLoaded.value = true;
+}
+
+async function createCard(text: string) {
+  const response = await fetch(`/api/cards`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      text
+    })
+  });
+
+  const card = await response.json();
+  cards.value.unshift({
+    _id: card._id,
+    text: card.text
+  });
+  selectedCard.value = null;
+}
+
+async function deleteCard(id: string) {
+  const response = await fetch(`/api/cards/${id}`, {
+    method: "DELETE"
+  });
+
+  const respJson = await response.json();
+  if (respJson.deletedCount >= 1) {
+    const idx = cards.value.findIndex((c) => c._id === id);
+    if (idx > -1) {
+      cards.value.splice(idx, 1);
+    }
+  }
+  selectedCard.value = null;
 }
 
 async function updateCard(id: string, text: string) {
@@ -354,10 +417,6 @@ async function isAdminCheck() {
     return false;
   }
 }
-
-onMounted(async () => {
-  isAdmin.value = await isAdminCheck();
-});
 </script>
 
 <style scoped>

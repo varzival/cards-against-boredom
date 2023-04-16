@@ -19,7 +19,7 @@ export class CardsService {
     perPage: number = 0,
     page: number = 0
   ): Promise<Array<CardDocument>> {
-    let query = this.cardModel.find({});
+    let query = this.cardModel.find({}).sort({ _id: -1 });
 
     if (perPage) {
       query = query.limit(perPage).skip(perPage * page);
@@ -39,6 +39,6 @@ export class CardsService {
   }
 
   async remove(id: string): Promise<any> {
-    return this.cardModel.deleteOne({ _id: id });
+    return await this.cardModel.deleteOne({ _id: id }).exec();
   }
 }

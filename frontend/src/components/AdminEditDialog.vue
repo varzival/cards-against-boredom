@@ -45,6 +45,7 @@
         <v-btn
           v-if="ask4Real"
           color="red"
+          :disabled="!id"
           @click="
             () => {
               ask4Real = false;
@@ -54,7 +55,14 @@
         >
           4 real?
         </v-btn>
-        <v-btn v-else color="red" icon fab @click="ask4Real = true">
+        <v-btn
+          v-else
+          color="red"
+          :disabled="!id"
+          icon
+          fab
+          @click="ask4Real = true"
+        >
           <v-icon>mdi-delete</v-icon>
         </v-btn>
         <v-btn
@@ -78,7 +86,10 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 
-const { modelValue } = defineProps<{ modelValue: boolean }>();
+const { modelValue, id } = defineProps<{
+  modelValue: boolean;
+  id: string | null;
+}>();
 
 const ask4Real = ref(false);
 

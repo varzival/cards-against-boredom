@@ -5,7 +5,7 @@ import { GameGateway } from "./game.gateway";
 import { GameController } from "./game.controller";
 import { Game, GameSchema } from "./schemas/game.schema";
 import { Card, CardSchema } from "../cards/schemas/card.schema";
-import { Question, QuestionSchema } from "./schemas/question.schema";
+import { Question, QuestionSchema } from "../questions/schemas/question.schema";
 
 @Module({
   imports: [

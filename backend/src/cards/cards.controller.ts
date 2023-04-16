@@ -41,7 +41,6 @@ export class CardsController {
 
   @Delete(":id")
   remove(@Param("id") id: string) {
-    console.log("DELETING", id);
     return this.cardsService.remove(id);
   }
 }

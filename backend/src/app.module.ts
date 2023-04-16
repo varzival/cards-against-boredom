@@ -8,6 +8,7 @@ import { join } from "path";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule } from "@nestjs/config";
 import { CardsModule } from './cards/cards.module';
+import { QuestionsModule } from './questions/questions.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { CardsModule } from './cards/cards.module';
       rootPath: join(__dirname, "../dist/")
     }),
     MongooseModule.forRoot(process.env.MONGO_DB_CONNECTION_STRING),
-    CardsModule
+    CardsModule,
+    QuestionsModule
   ],
   controllers: [AppController],
   providers: [AppService]

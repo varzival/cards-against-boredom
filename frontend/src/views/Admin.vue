@@ -26,15 +26,13 @@
       @update:modelValue="(newValue) => (selectedCard = newValue)"
       @save="
         () => {
-          if (selectedCard && selectedCard._id)
-            updateCard(selectedCard._id, selectedCard.text);
-          else if (selectedCard && !selectedCard._id)
-            createCard(selectedCard.text);
+          if (selectedCard && selectedCard._id) cardsCRUD.update();
+          else if (selectedCard && !selectedCard._id) cardsCRUD.create();
         }
       "
       @delete="
         () => {
-          if (selectedCard && selectedCard._id) deleteCard(selectedCard._id);
+          if (selectedCard && selectedCard._id) cardsCRUD.delete();
         }
       "
     >
@@ -57,6 +55,18 @@
       :id="selectedQuestion ? selectedQuestion._id : null"
       :modelValue="!!selectedQuestion"
       @update:modelValue="(newValue) => (selectedQuestion = newValue)"
+      @save="
+        () => {
+          if (selectedQuestion && selectedQuestion._id) questionsCRUD.update();
+          else if (selectedQuestion && !selectedQuestion._id)
+            questionsCRUD.create();
+        }
+      "
+      @delete="
+        () => {
+          if (selectedQuestion && selectedQuestion._id) questionsCRUD.delete();
+        }
+      "
     >
       <template v-slot:title
         ><h3>Karte {{ selectedQuestion ? selectedQuestion._id : "" }}</h3>
@@ -105,7 +115,7 @@
                     :light="true"
                     :selectable="true"
                     :faded="false"
-                    @click="selectNewCard"
+                    @click="cardsCRUD.selectNew()"
                   />
                 </v-col>
               </v-row>
@@ -116,19 +126,31 @@
                     :light="true"
                     :selectable="true"
                     :faded="false"
-                    @click="selectCard(card._id)"
+                    @click="cardsCRUD.select(card._id)"
                   />
                 </v-col>
               </v-row>
               <v-row>
                 <v-progress-linear
-                  v-if="!allCardsLoaded"
+                  v-if="!cardsAllLoaded"
                   indeterminate
                   color="yellow darken-2"
                 ></v-progress-linear>
               </v-row>
             </div>
             <div v-if="tab == 'questions'">
+              <v-row>
+                <v-col cols="1"> </v-col>
+                <v-col>
+                  <Card
+                    :yellow="true"
+                    :light="false"
+                    :selectable="true"
+                    :faded="false"
+                    @click="questionsCRUD.selectNew()"
+                  />
+                </v-col>
+              </v-row>
               <v-row v-for="question in questions" :key="question._id">
                 <v-col cols="1" align-self="center" class="question-num">
                   <h3>{{ question.num }}</h3>
@@ -139,7 +161,7 @@
                     :light="false"
                     :selectable="true"
                     :faded="false"
-                    @click="selectQuestion(question._id)"
+                    @click="questionsCRUD.select(question._id)"
                   />
                 </v-col>
               </v-row>
@@ -212,6 +234,7 @@ import AppBar from "@/components/AppBar.vue";
 import Card from "@/components/Card.vue";
 import { useStore } from "@/store/app";
 import { onMounted, ref } from "vue";
+import CRUDObject from "../utils/CRUDObject";
 
 const store = useStore();
 const adminPwd = ref("");
@@ -220,45 +243,32 @@ const isAdmin = ref(false);
 const showAlert = ref(false);
 const tab = ref("game");
 
-const cards = ref<Array<{ _id: string; text: string }>>([]);
-const cardsPage = ref<number>(0);
-const selectedCard = ref<{ _id: string; text: string } | null>(null);
-const allCardsLoaded = ref<boolean>(false);
+type QuestionType = {
+  _id: string;
+  num: number;
+  text: string;
+};
+const questionsCRUD = new CRUDObject<QuestionType>("questions", {
+  _id: "",
+  text: "",
+  num: 1
+});
+const questions = questionsCRUD.all;
+const selectedQuestion = questionsCRUD.selected;
+const allQuestionsLoaded = questionsCRUD.allLoaded;
 
-const questions = ref<Array<{ _id: string; num: number; text: string }>>([]);
-const questionsPage = ref<number>(0);
-const selectedQuestion = ref<{ _id: string; num: number; text: string } | null>(
-  null
-);
-const allQuestionsLoaded = ref<boolean>(false);
-
-function selectNewCard() {
-  selectedCard.value = {
-    _id: "",
-    text: ""
-  };
-}
-
-function selectCard(id: string) {
-  const card = cards.value.find((c) => c._id === id);
-  if (card)
-    selectedCard.value = {
-      _id: card._id,
-      text: card.text
-    };
-}
-
-function selectQuestion(id: string) {
-  selectedQuestion.value = questions.value.find((c) => c._id === id) ?? {
-    _id: "",
-    text: "",
-    num: 1
-  };
-}
+type CardType = {
+  _id: string;
+  text: string;
+};
+const cardsCRUD = new CRUDObject<CardType>("cards", { _id: "", text: "" });
+const cards = cardsCRUD.all;
+const selectedCard = cardsCRUD.selected;
+const cardsAllLoaded = cardsCRUD.allLoaded;
 
 onMounted(async () => {
-  loadCards();
-  loadQuestions();
+  cardsCRUD.load();
+  questionsCRUD.load();
   isAdmin.value = await isAdminCheck();
 });
 
@@ -269,87 +279,12 @@ window.onscroll = () => {
 
   if (bottomOfWindow) {
     if (tab.value === "cards") {
-      loadCards();
+      cardsCRUD.load();
     } else if (tab.value === "questions") {
-      loadQuestions();
+      questionsCRUD.load();
     }
   }
 };
-
-async function loadCards() {
-  if (allCardsLoaded.value) return;
-  const response = await fetch(`/api/cards?perPage=10&page=${cardsPage.value}`);
-  const newCards = await response.json();
-  cards.value = cards.value.concat(newCards);
-  cardsPage.value += 1;
-  if (!newCards.length) allCardsLoaded.value = true;
-}
-
-async function createCard(text: string) {
-  const response = await fetch(`/api/cards`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      text
-    })
-  });
-
-  const card = await response.json();
-  cards.value.unshift({
-    _id: card._id,
-    text: card.text
-  });
-  selectedCard.value = null;
-}
-
-async function deleteCard(id: string) {
-  const response = await fetch(`/api/cards/${id}`, {
-    method: "DELETE"
-  });
-
-  const respJson = await response.json();
-  if (respJson.deletedCount >= 1) {
-    const idx = cards.value.findIndex((c) => c._id === id);
-    if (idx > -1) {
-      cards.value.splice(idx, 1);
-    }
-  }
-  selectedCard.value = null;
-}
-
-async function updateCard(id: string, text: string) {
-  const response = await fetch(`/api/cards/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      text
-    })
-  });
-  const card = await response.json();
-  const idx = cards.value.findIndex((c) => c._id === card._id);
-  if (idx > -1) {
-    cards.value.splice(idx, 1, {
-      _id: card._id,
-      text: card.text
-    });
-  }
-  selectedCard.value = null;
-}
-
-async function loadQuestions() {
-  if (allQuestionsLoaded.value) return;
-  const response = await fetch(
-    `/api/questions?perPage=10&page=${questionsPage.value}`
-  );
-  const newQuestions = await response.json();
-  questions.value = questions.value.concat(newQuestions);
-  questionsPage.value += 1;
-  if (!newQuestions.length) allQuestionsLoaded.value = true;
-}
 
 const rules = ref([
   (value: string) => !!value || "Required.",

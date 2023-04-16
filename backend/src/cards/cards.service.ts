@@ -10,9 +10,7 @@ export class CardsService {
   constructor(@InjectModel(Card.name) private cardModel: Model<Card>) {}
 
   async create(createCardDto: CreateCardDto): Promise<CardDocument> {
-    return this.cardModel.create({
-      text: createCardDto.text
-    });
+    return this.cardModel.create(createCardDto);
   }
 
   async findAll(

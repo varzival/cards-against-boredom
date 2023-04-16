@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory, raw } from "@nestjs/mongoose";
 import { Document, HydratedDocument, SchemaTypes } from "mongoose";
 import { Card } from "../../cards/schemas/card.schema";
-import { Question } from "./question.schema";
+import { Question } from "../../questions/schemas/question.schema";
 
 export enum GameState {
   SELECT_CARD = "SELECT_CARD",

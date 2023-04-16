@@ -59,10 +59,7 @@ export class GameService {
     await this.shuffleQuestions(game);
 
     for (const user of game.users) {
-      user.cards = [];
-      for (let i = 0; i < 10; i++) {
-        await this.drawCard(game, user);
-      }
+      await this.dealCards(game, user);
     }
 
     game.startedAt = new Date();
@@ -90,6 +87,13 @@ export class GameService {
     await game.save();
 
     return game;
+  }
+
+  async dealCards(game: GameDocument, user: User) {
+    user.cards = [];
+    for (let i = 0; i < 10; i++) {
+      await this.drawCard(game, user);
+    }
   }
 
   async resetGameRound(game: GameDocument) {
@@ -230,6 +234,7 @@ export class GameService {
         )
         .exec();
     }
+    return false;
   }
 
   async deleteUserFromGame(userName: string, game: GameDocument) {

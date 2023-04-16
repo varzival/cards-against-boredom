@@ -281,10 +281,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(
       `Connected to ${client.handshake.query.name}, id ${client.id}, from ${client.handshake.address}`
     );
-    const game = await this.gameService.findOneOrCreate();
+    let game = await this.gameService.findOneOrCreate();
 
     const userName = client.handshake.query.name;
-    const user = game.users.find((u) => u.name === userName);
+    let user = game.users.find((u) => u.name === userName);
     for (const [
       existingClient,
       existingUserName
@@ -298,9 +298,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     }
 
-    // TODO deal cards if necessary, make vote options correct
+    // TODO make vote options correct
 
-    await this.gameService.assignUserToGame(userName, game);
+    const assigned = await this.gameService.assignUserToGame(userName, game);
+    if (assigned && game.startedAt) {
+      game = await this.gameService.findOne();
+      user = game.users.find((u) => u.name === userName);
+      await this.gameService.dealCards(game, user);
+      await game.save();
+    }
 
     const gameState = await this.getGameState(userName);
 

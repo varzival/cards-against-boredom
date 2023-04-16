@@ -1,15 +1,17 @@
 import { Model } from "mongoose";
 
-export interface IBaseService<CreateDTO, UpdateDTO, Document> {
-  create: (CreateDTO) => Promise<Document>;
-  findAll: (perPage: number, page: number) => Array<Document>;
-  findOne: (id: string) => Document;
-  update: (id: string, UpdateDTO) => Document;
-  remove: (id: string) => any;
+export interface IBaseService<CreateDTO, UpdateDTO, Type> {
+  create: (CreateDTO) => Promise<Type>;
+  findAll: (perPage: number, page: number) => Promise<Array<Type>>;
+  findOne: (id: string) => Promise<Type>;
+  update: (id: string, UpdateDTO) => Promise<Type>;
+  remove: (id: string) => Promise<any>;
 }
 
-abstract class BaseService<CreateDTO, UpdateDTO, Type> {
-  private model: Model<Type>;
+abstract class BaseService<CreateDTO, UpdateDTO, Type>
+  implements IBaseService<CreateDTO, UpdateDTO, Type>
+{
+  constructor(private model: Model<Type>) {}
 
   async create(createDto: CreateDTO): Promise<Type> {
     return this.model.create(createDto);

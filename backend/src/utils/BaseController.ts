@@ -9,11 +9,11 @@ import {
   Query
 } from "@nestjs/common";
 import { AdminGuard } from "../auth/admin.guard";
-import { IBaseService } from "./BaseService";
+//import { IBaseService } from "./BaseService";
 
 @UseGuards(AdminGuard)
-abstract class BaseController<CreateDTO, UpdateDTO, Document> {
-  private service: IBaseService<CreateDTO, UpdateDTO, Document>;
+abstract class BaseController<CreateDTO, UpdateDTO> {
+  constructor(private service: any) {}
 
   @Post()
   create(@Body() createDto: CreateDTO) {

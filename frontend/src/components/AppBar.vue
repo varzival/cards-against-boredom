@@ -28,10 +28,11 @@ import PlayerOverview from "./PlayerOverview.vue";
 
 const { mobile } = useDisplay();
 
-const { text, admin, hideTabs } = withDefaults(
-  defineProps<{ text: string; admin?: boolean; hideTabs?: boolean }>(),
-  { text: "", admin: false, hideTabs: false }
-);
+const { text, admin, hideTabs } = defineProps<{
+  text: string;
+  admin?: boolean;
+  hideTabs?: boolean;
+}>();
 
 const drawer = ref(!mobile.value);
 </script>

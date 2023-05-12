@@ -38,6 +38,7 @@ onMounted(() => {
       initSocket();
     });
   }
+  document.title = `Cards against ${process.env.VUE_APP_TITLE ?? "KERN"}`;
 });
 
 watch(

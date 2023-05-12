@@ -11,7 +11,7 @@
       <v-row align="center" justify="center" style="margin-bottom: 100px">
         <v-spacer></v-spacer>
         <v-col>
-          <h1 style="font-size: calc(100px + 5vw)">KERN</h1>
+          <h1 style="font-size: calc(100px + 5vw)">{{ title }}</h1>
         </v-col>
         <v-spacer></v-spacer>
       </v-row>
@@ -48,6 +48,7 @@ import { ref } from "vue";
 const store = useStore();
 
 const name = ref("");
+const title = ref(process.env.VUE_APP_TITLE ?? "KERN");
 
 const rules = ref([
   (value: string) => !!value || "Required.",

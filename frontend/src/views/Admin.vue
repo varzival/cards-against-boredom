@@ -236,7 +236,7 @@ import AdminEditDialog from "@/components/AdminEditDialog.vue";
 import AppBar from "@/components/AppBar.vue";
 import Card from "@/components/Card.vue";
 import { useStore } from "@/store/app";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import CRUDObject from "../utils/CRUDObject";
 
 const store = useStore();
@@ -269,9 +269,14 @@ const cards = cardsCRUD.all;
 const selectedCard = cardsCRUD.selected;
 const cardsAllLoaded = cardsCRUD.allLoaded;
 
+watch(isAdmin, async (newValue, _) => {
+  if (newValue) {
+    cardsCRUD.load();
+    questionsCRUD.load();
+  }
+});
+
 onMounted(async () => {
-  cardsCRUD.load();
-  questionsCRUD.load();
   isAdmin.value = await isAdminCheck();
 });
 

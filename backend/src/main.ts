@@ -13,7 +13,7 @@ async function bootstrap() {
   );
 
   await app.register(secureSession, {
-    secret: process.env.SECRET || "secret",
+    secret: process.env.SECRET || "verysecretkeydonttellanyonethankyouverymuch",
     salt: "lptlpghokdkxjiwu",
     cookie: {
       path: "/"

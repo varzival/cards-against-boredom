@@ -1,1 +1,0 @@
-scp -r ./backend/build vadim@kernopedia.de:/home/vadim/cards-against-kern

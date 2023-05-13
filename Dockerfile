@@ -1,13 +1,12 @@
 FROM node:16
 
-ARG VUE_APP_TITLE
-ENV VUE_APP_TITLE ${VUE_APP_TITLE}
+ARG VITE_APP_TITLE
 
 WORKDIR /frontend
 COPY ./frontend/package*.json ./
 RUN npm install
 COPY ./frontend .
-RUN npm run build
+RUN VITE_APP_TITLE=${VITE_APP_TITLE} npm run build
 
 WORKDIR /app
 COPY ./backend/package.json ./backend/package-lock.json ./

@@ -19,7 +19,7 @@ services:
     build: 
       context: .
       args:
-        VUE_APP_TITLE: BOREDOM
+        VITE_APP_TITLE: BOREDOM
     ports:
       - 5000:5000
     environment:

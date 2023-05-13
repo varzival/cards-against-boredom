@@ -48,7 +48,7 @@ import { ref } from "vue";
 const store = useStore();
 
 const name = ref("");
-const title = ref(process.env.VUE_APP_TITLE ?? "KERN");
+const title = ref(import.meta.env.VITE_APP_TITLE ?? "KERN");
 
 const rules = ref([
   (value: string) => !!value || "Required.",

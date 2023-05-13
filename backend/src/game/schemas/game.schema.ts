@@ -53,7 +53,10 @@ export class Game {
   @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Card" }], default: [] })
   cards: Array<Card>;
 
-  @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Question" }] })
+  @Prop({
+    type: [{ type: SchemaTypes.ObjectId, ref: "Question" }],
+    default: []
+  })
   questions: Array<Question>;
 }
 

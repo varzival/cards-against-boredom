@@ -28,7 +28,8 @@ class CRUDObject<Type extends CRUDBaseType> {
     const newCards = await response.json();
     this.all.value = this.all.value.concat(newCards);
     this.page.value += 1;
-    if (!newCards.length) this.allLoaded.value = true;
+    if (!newCards.length || newCards.length < PER_PAGE)
+      this.allLoaded.value = true;
   }
 
   public selectNew() {

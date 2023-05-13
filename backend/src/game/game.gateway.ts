@@ -47,7 +47,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (gameLean.questions[0].num !== uniqueCards.length)
       throw new Error("Not the right amount of cards chosen");
 
-    const user = game.users.find((u) => u.name === client.handshake.query.name);
+    const user = game.users?.find(
+      (u) => u.name === client.handshake.query.name
+    );
+    if (!user) throw new Error("No user found");
+
     await this.gameService.selectCard(user, uniqueCards);
     await game.save();
 
@@ -73,7 +77,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (game.state !== GameState.VOTE)
       throw new Error(`Game is in the ${game.state} State`);
 
-    const user = game.users.find((u) => u.name === client.handshake.query.name);
+    const user = game.users?.find(
+      (u) => u.name === client.handshake.query.name
+    );
+    if (!user) throw new Error("No user found");
     await this.gameService.vote(user, body.voteOption);
     await game.save();
 
@@ -95,7 +102,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (game.state !== GameState.SHOW_RESULTS)
       throw new Error(`Game is in the ${game.state} State`);
 
-    const user = game.users.find((u) => u.name === client.handshake.query.name);
+    const user = game.users?.find(
+      (u) => u.name === client.handshake.query.name
+    );
+    if (!user) throw new Error("No user found");
     user.continue = true;
     await game.save();
 
@@ -178,13 +188,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const game = await this.gameService.findOneLean();
 
     let voteOptions = null;
-    const usersOrdered = game.users.sort((a, b) => a.voteOrder - b.voteOrder);
+    const usersOrdered = game.users?.sort((a, b) => a.voteOrder - b.voteOrder);
     if (game.state !== GameState.SELECT_CARD) {
       voteOptions = [];
 
-      for (const user of usersOrdered) {
-        const cards = user.selectedCards.map((i) => user.cards[i].text);
-        voteOptions.push(cards);
+      if (usersOrdered) {
+        for (const user of usersOrdered) {
+          const cards = user.selectedCards.map((i) => user.cards[i].text);
+          voteOptions.push(cards);
+        }
       }
     }
 
@@ -192,15 +204,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (game.state === GameState.SHOW_RESULTS) {
       voteResult = [];
 
-      for (const user of usersOrdered) {
-        const votedFor = usersOrdered
-          .filter((u) => u.votedFor === user.voteOrder)
-          .map((u) => u.name);
-        voteResult.push({
-          players: votedFor,
-          vote: user.voteOrder,
-          owner: user.name
-        });
+      if (usersOrdered) {
+        for (const user of usersOrdered) {
+          const votedFor = usersOrdered
+            .filter((u) => u.votedFor === user.voteOrder)
+            .map((u) => u.name);
+          voteResult.push({
+            players: votedFor,
+            vote: user.voteOrder,
+            owner: user.name
+          });
+        }
       }
     }
 
@@ -228,7 +242,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async sendGameStateToAll() {
     const game = await this.gameService.findOne();
     for (const [client, userName] of this.clientByName.entries()) {
-      const user = game.users.find((u) => u.name === userName);
+      const user = game.users?.find((u) => u.name === userName);
       if (!user) {
         this.logger.error(`User ${userName} is not connected`);
         continue;
@@ -246,7 +260,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async sendPlayersToAll() {
     const game = await this.gameService.findOneLean();
     for (const [client, userName] of this.clientByName.entries()) {
-      const user = game.users.find((u) => u.name === userName);
+      const user = game.users?.find((u) => u.name === userName);
       if (!user) {
         this.logger.error(`User ${userName} is not connected`);
         continue;
@@ -284,26 +298,28 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let game = await this.gameService.findOneOrCreate();
 
     const userName = client.handshake.query.name;
-    let user = game.users.find((u) => u.name === userName);
-    for (const [
-      existingClient,
-      existingUserName
-    ] of this.clientByName.entries()) {
-      if (
-        existingUserName === userName &&
-        existingClient.handshake.address !== client.handshake.address
-      ) {
-        this.logger.error(`User ${user.name} already exists`);
-        throw new Error("User exists already");
-      }
-    }
+    // let user = game.users?.find((u) => u.name === userName);
+
+    // for (const [
+    //   existingClient,
+    //   existingUserName
+    // ] of this.clientByName.entries()) {
+    //   if (
+    //     existingUserName === userName &&
+    //     existingClient.handshake.address !== client.handshake.address
+    //   ) {
+    //     this.logger.error(`User ${user.name} already exists`);
+    //     throw new Error("User exists already");
+    //   }
+    // }
 
     // TODO make vote options correct
 
     const assigned = await this.gameService.assignUserToGame(userName, game);
     if (assigned && game.startedAt) {
       game = await this.gameService.findOne();
-      user = game.users.find((u) => u.name === userName);
+      const user = game.users?.find((u) => u.name === userName);
+      if (!user) throw new Error("No user found");
       await this.gameService.dealCards(game, user);
       await game.save();
     }

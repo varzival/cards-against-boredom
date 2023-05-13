@@ -1,0 +1,25 @@
+version: '3.1'
+
+volumes:
+  mongodb_data:
+
+services:
+
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${INITIAL_MONGO_PWD}
+    volumes:
+      - mongodb_data:/data/db
+
+  cards-against:
+    image: ghcr.io/varzival/cards-against-boredom:latest
+    restart: always
+    ports:
+      - 5000:5000
+    environment:
+      - MONGO_DB_CONNECTION_STRING=mongodb://root:${INITIAL_MONGO_PWD}@mongo
+      - ADMIN_PW=${ADMIN_PW}
+      - SECRET=${SECRET}

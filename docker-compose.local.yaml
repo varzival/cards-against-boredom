@@ -1,0 +1,26 @@
+version: '3.1'
+
+volumes:
+  mongodb_data:
+
+services:
+
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: initial_mongo_pwd
+    ports:
+      - 27018:27017
+    volumes:
+      - mongodb_data:/data/db
+
+  cards-against:
+    build: 
+      context: .
+      args:
+        VUE_APP_TITLE: BOREDOM
+    ports:
+      - 5000:5000
+    environment:
+      - MONGO_DB_CONNECTION_STRING=mongodb://root:initial_mongo_pwd@mongo

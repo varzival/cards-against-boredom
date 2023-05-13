@@ -34,7 +34,8 @@ export class GameService {
     if (!game) {
       const game = new this.gameModel({
         startedAt: null,
-        state: GameState.SELECT_CARD
+        state: GameState.SELECT_CARD,
+        users: []
       });
       game.save();
     }
@@ -214,7 +215,7 @@ export class GameService {
   }
 
   async assignUserToGame(userName: string, game: GameDocument) {
-    if (!game.users.find((u) => u.name === userName)) {
+    if (!game.users?.find((u) => u.name === userName)) {
       return this.gameModel
         .updateOne(
           { _id: game.id },

@@ -3,7 +3,10 @@
     <router-view></router-view>
 
     <v-footer app v-if="!mobile">
-      <div class="footer-text">ERDKERN Productions</div>
+      <div class="footer-text">
+        made by
+        <a target="_blank" href="https://github.com/varzival">Varzival</a>
+      </div>
     </v-footer>
   </v-app>
 </template>
@@ -38,7 +41,9 @@ onMounted(() => {
       initSocket();
     });
   }
-  document.title = `Cards against ${import.meta.env.VITE_APP_TITLE ?? "KERN"}`;
+  document.title = `Cards against ${
+    import.meta.env.VITE_APP_TITLE ?? "BOREDOM"
+  }`;
 });
 
 watch(

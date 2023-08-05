@@ -15,10 +15,7 @@ services:
       - mongodb_data:/data/db
 
   cards-against:
-    build: 
-      context: .
-      args:
-        VITE_APP_TITLE: BOREDOM
+    image: ghcr.io/varzival/cards-against-boredom:latest
     restart: always
     ports:
       - 5000:5000

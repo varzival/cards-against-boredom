@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:16-alpine
 
 ARG VITE_APP_TITLE
 

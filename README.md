@@ -32,7 +32,7 @@ Enjoy playing!
 
 ## Demo
 
-[https://cab.kernopedia.de/](https://cab.kernopedia.de/)
+[https://cab.kernopedia.de/](https://cab.varzival.eu/)
 
 An admin will need to start the game to play it properly. But you can still enjoy the slick landing page animation!
 

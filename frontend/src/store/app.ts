@@ -1,5 +1,7 @@
 import { defineStore } from "pinia";
 import { useStorage } from "@vueuse/core";
+import { v4 as uuid } from "uuid";
+import { delete_cookie } from "../utils/cookies";
 
 export enum GameState {
   SELECT_CARD = "SELECT_CARD",
@@ -9,6 +11,7 @@ export enum GameState {
 export interface State {
   gameState: GameState;
   name: string;
+  uniqueUserId: string;
   question: Question | null;
   players: Array<Player>;
   hand: Array<string>;
@@ -42,9 +45,10 @@ export interface Question {
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
 
 export const useStore = defineStore("app", {
-  state(): Overwrite<State, { name: any }> {
+  state(): Overwrite<State, { name: any; uniqueUserId: any }> {
     return {
       name: useStorage("name", ""),
+      uniqueUserId: useStorage("uniqueUserId", ""),
       players: [],
       hand: [],
       selectedCards: [],
@@ -58,8 +62,15 @@ export const useStore = defineStore("app", {
     };
   },
   actions: {
+    reset() {
+      this.$reset();
+      this.name = ""; // necessary because of vueuse
+      this.uniqueUserId = "";
+      delete_cookie("session", "/", window.location.hostname);
+    },
     setName(name: string) {
       this.name = name;
+      this.uniqueUserId = uuid();
     },
     addPlayer(name: string) {
       this.players.push({

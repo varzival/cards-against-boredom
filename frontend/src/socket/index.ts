@@ -7,11 +7,6 @@ export interface Socket {
   connected: boolean;
 }
 
-/*
-let emitQueue = [] as Array<>;
-let onQueue = [] as Array<>;
-*/
-
 export let socket = {
   emit: () => {},
   on: () => {},
@@ -19,9 +14,11 @@ export let socket = {
   connected: false
 } as Socket;
 
-export function createSocket(name: string) {
-  // TODO use auth data here
-  const newSocket = io("/", { autoConnect: false, query: { name: name } });
+export function createSocket(name: string, uniqueId: string) {
+  const newSocket = io("/", {
+    autoConnect: false,
+    query: { name: name, uniqueId: uniqueId }
+  });
 
   newSocket.onAny((event, ...args) => {
     console.log(event, args);

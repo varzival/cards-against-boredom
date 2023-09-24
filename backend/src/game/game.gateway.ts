@@ -4,10 +4,13 @@ import {
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  ConnectedSocket
+  ConnectedSocket,
+  WsException,
+  WebSocketServer
 } from "@nestjs/websockets";
 import { GameService } from "./game.service";
 import { Game, GameState } from "./schemas/game.schema";
+import { Server } from "socket.io";
 
 interface SelectCardsBody {
   cards: Array<number>;
@@ -18,11 +21,16 @@ interface VoteBody {
 }
 @WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  clientByName: Map<any, string> = new Map<any, string>();
+  @WebSocketServer()
+  webSocketServer: Server;
 
   private readonly logger = new Logger(GameGateway.name);
 
   constructor(private readonly gameService: GameService) {}
+
+  connectedClients() {
+    return this.webSocketServer.sockets.sockets;
+  }
 
   @SubscribeMessage("selectCards")
   async selectCards(
@@ -33,24 +41,24 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let gameLean = await this.gameService.findOneLean();
 
     if (!gameLean || !gameLean.startedAt)
-      throw new Error("Game has not started yet");
+      throw new WsException("Game has not started yet");
     if (gameLean.state !== GameState.SELECT_CARD)
-      throw new Error(`Game is in the ${gameLean.state} State`);
-    if (!gameLean.questions[0]) throw new Error("No question chosen");
+      throw new WsException(`Game is in the ${gameLean.state} State`);
+    if (!gameLean.questions[0]) throw new WsException("No question chosen");
 
     let uniqueCards = body?.cards;
-    if (!uniqueCards) throw new Error("No cards chosen");
+    if (!uniqueCards) throw new WsException("No cards chosen");
     uniqueCards = [...new Set(uniqueCards)];
     if (uniqueCards.length !== body.cards?.length)
-      throw new Error("Duplicate cards chosen");
+      throw new WsException("Duplicate cards chosen");
 
     if (gameLean.questions[0].num !== uniqueCards.length)
-      throw new Error("Not the right amount of cards chosen");
+      throw new WsException("Not the right amount of cards chosen");
 
     const user = game.users?.find(
       (u) => u.name === client.handshake.query.name
     );
-    if (!user) throw new Error("No user found");
+    if (!user) throw new WsException("No user found");
 
     await this.gameService.selectCard(user, uniqueCards);
     await game.save();
@@ -73,14 +81,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async vote(@ConnectedSocket() client: any, @Body() body: VoteBody) {
     const game = await this.gameService.findOne();
 
-    if (!game || !game.startedAt) throw new Error("Game has not started yet");
+    if (!game || !game.startedAt)
+      throw new WsException("Game has not started yet");
     if (game.state !== GameState.VOTE)
-      throw new Error(`Game is in the ${game.state} State`);
+      throw new WsException(`Game is in the ${game.state} State`);
 
     const user = game.users?.find(
       (u) => u.name === client.handshake.query.name
     );
-    if (!user) throw new Error("No user found");
+    if (!user) throw new WsException("No user found");
     await this.gameService.vote(user, body.voteOption);
     await game.save();
 
@@ -98,14 +107,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async continue(@ConnectedSocket() client: any) {
     const game = await this.gameService.findOne();
 
-    if (!game || !game.startedAt) throw new Error("Game has not started yet");
+    if (!game || !game.startedAt)
+      throw new WsException("Game has not started yet");
     if (game.state !== GameState.SHOW_RESULTS)
-      throw new Error(`Game is in the ${game.state} State`);
+      throw new WsException(`Game is in the ${game.state} State`);
 
     const user = game.users?.find(
       (u) => u.name === client.handshake.query.name
     );
-    if (!user) throw new Error("No user found");
+    if (!user) throw new WsException("No user found");
     user.continue = true;
     await game.save();
 
@@ -129,12 +139,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await game.save();
 
     const clientsToDisconnect = [];
-    for (const [
-      existingClient,
-      existingUserName
-    ] of this.clientByName.entries()) {
-      if (existingUserName === userName)
-        clientsToDisconnect.push(existingClient);
+    for (const socket of this.connectedClients().values()) {
+      if (socket.handshake.query.name === userName)
+        clientsToDisconnect.push(socket);
     }
 
     for (const cl of clientsToDisconnect) {
@@ -146,8 +153,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   getPlayers(game: Game) {
     const activeUsers = new Set<string>();
-    for (const userName of this.clientByName.values()) {
-      activeUsers.add(userName);
+    for (const socket of this.connectedClients().values()) {
+      activeUsers.add(socket.handshake.query.name as string);
     }
 
     const selectionMade = new Set<string>();
@@ -241,43 +248,48 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async sendGameStateToAll() {
     const game = await this.gameService.findOne();
-    for (const [client, userName] of this.clientByName.entries()) {
-      const user = game.users?.find((u) => u.name === userName);
+    for (const [clientID, socket] of this.connectedClients().entries()) {
+      const user = game.users?.find(
+        (u) => u.name === socket.handshake.query.name
+      );
       if (!user) {
-        this.logger.error(`User ${userName} is not connected`);
+        this.logger.error(
+          `User ${socket.handshake.query.name} is not connected`
+        );
         continue;
       }
       const gameState = await this.getGameState(user.name);
       if (gameState) {
-        this.logger.log(
-          `sending status to ${user.name}, clientID ${client.id}`
-        );
-        client.emit("gameState", gameState);
+        this.logger.log(`sending status to ${user.name}, clientID ${clientID}`);
+        socket.emit("gameState", gameState);
       }
     }
   }
 
   async sendPlayersToAll() {
     const game = await this.gameService.findOneLean();
-    for (const [client, userName] of this.clientByName.entries()) {
-      const user = game.users?.find((u) => u.name === userName);
+    for (const socket of this.connectedClients().values()) {
+      const user = game.users?.find(
+        (u) => u.name === socket.handshake.query.name
+      );
       if (!user) {
-        this.logger.error(`User ${userName} is not connected`);
+        this.logger.error(
+          `User ${socket.handshake.query.name} is not connected`
+        );
         continue;
       }
 
-      client.emit("gameState", {
+      socket.emit("gameState", {
         players: this.getPlayers(game)
       });
     }
   }
 
   async sendKick(name: string) {
-    for (const [client, userName] of this.clientByName.entries()) {
-      if (userName === name) {
-        client.emit("kick");
-
-        this.clientByName.delete(client);
+    for (const socket of this.connectedClients().values()) {
+      if (socket.handshake.query.name === name) {
+        socket.emit("kick");
+        socket.disconnect(true);
       }
     }
   }
@@ -286,7 +298,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(
       `Disconnected from ${client.handshake.query.name}, id: ${client.id}, from ${client.handshake.address}`
     );
-    this.clientByName.delete(client);
 
     await this.sendGameStateToAll();
   }
@@ -298,36 +309,35 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let game = await this.gameService.findOneOrCreate();
 
     const userName = client.handshake.query.name;
-    // let user = game.users?.find((u) => u.name === userName);
+    const uniqueId = client.handshake.query.uniqueId;
+    if (!userName || !uniqueId) {
+      throw new WsException("Wrong websocket handshake data");
+    }
 
-    // for (const [
-    //   existingClient,
-    //   existingUserName
-    // ] of this.clientByName.entries()) {
-    //   if (
-    //     existingUserName === userName &&
-    //     existingClient.handshake.address !== client.handshake.address
-    //   ) {
-    //     this.logger.error(`User ${user.name} already exists`);
-    //     throw new Error("User exists already");
-    //   }
-    // }
-
-    // TODO make vote options correct
-
-    const assigned = await this.gameService.assignUserToGame(userName, game);
+    const assigned = await this.gameService.assignUserToGame(
+      userName,
+      uniqueId,
+      game
+    );
     if (assigned && game.startedAt) {
       game = await this.gameService.findOne();
       const user = game.users?.find((u) => u.name === userName);
-      if (!user) throw new Error("No user found");
+      if (!user) throw new WsException("No user found");
       await this.gameService.dealCards(game, user);
       await game.save();
+    } else if (!assigned) {
+      const user = game.users?.find((u) => u.name === userName);
+      if (!user) throw new WsException("No user found");
+      if (user.uniqueId !== uniqueId) {
+        client.emit("connect_failed", "User exists already.");
+        client.disconnect(0);
+        return;
+      }
     }
 
     const gameState = await this.getGameState(userName);
 
     client.emit("gameState", gameState);
-    this.clientByName.set(client, client.handshake.query.name);
 
     await this.sendGameStateToAll();
   }

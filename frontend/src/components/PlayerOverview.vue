@@ -57,8 +57,7 @@ const { modelValue, admin } = defineProps<{
 
 function logout() {
   socket.emit("logout");
-  store.$reset();
-  store.name = ""; // necessary because of vueuse
+  store.reset();
   delete_cookie("session", "/", window.location.hostname);
 }
 

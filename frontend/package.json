@@ -9,22 +9,24 @@
     "lint": "eslint . --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "vue-tsc": "^1.0.9",
     "@mdi/font": "7.0.96",
     "@vueuse/core": "^8.2.0",
     "core-js": "^3.8.3",
     "pinia": "^2.0.23",
     "pinia-shared-state": "^0.3.0",
     "roboto-fontface": "*",
-    "socket.io-client": "^4.6.1",
+    "socket.io-client": "^4.7.2",
+    "uuid": "^9.0.1",
     "vue": "^3.2.13",
     "vue-router": "^4.0.0",
+    "vue-tsc": "^1.0.9",
     "vuetify": "^3.0.0",
     "webfontloader": "^1.0.0"
   },
   "devDependencies": {
     "@babel/types": "^7.21.3",
     "@types/node": "^18.11.9",
+    "@types/uuid": "^9.0.4",
     "@types/webfontloader": "^1.6.35",
     "@vitejs/plugin-vue": "^3.0.3",
     "@vue/eslint-config-typescript": "^11.0.0",

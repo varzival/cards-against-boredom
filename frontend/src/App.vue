@@ -1,5 +1,15 @@
 <template>
   <v-app>
+    <v-alert
+      v-model="store.showAlert"
+      closable
+      :title="store.alertMessage.title"
+      :text="store.alertMessage.message"
+      type="error"
+      style="position: absolute; top: 10vh; right: 5vw; z-index: 9999999"
+    >
+    </v-alert>
+
     <router-view></router-view>
 
     <v-footer app v-if="!mobile">
@@ -12,26 +22,31 @@
 </template>
 
 <script lang="ts" setup>
-import { nextTick, onMounted, watch } from "vue";
+import { nextTick, onMounted, ref, watch } from "vue";
 import { createSocket, socket } from "./socket";
 import { State, useStore } from "./store/app";
 import { useDisplay } from "vuetify";
-import { delete_cookie } from "./utils/cookies";
 
 const { mobile } = useDisplay();
 const store = useStore();
 
 function initSocket() {
-  createSocket(store.name);
+  createSocket(store.name, store.uniqueUserId);
+
   if (!socket.connected) socket.connect();
+
   socket.on("gameState", (payload: State) => {
     store.setState(payload);
   });
 
   socket.on("kick", () => {
-    store.$reset();
-    store.name = ""; // necessary because of vueuse
-    delete_cookie("session", "/", window.location.hostname);
+    store.reset();
+  });
+
+  socket.on("connect_failed", () => {
+    console.error("Connection Failed");
+    store.reset();
+    store.setAlertMessage("Login fehlgeschlagen", "Name existiert bereits");
   });
 }
 

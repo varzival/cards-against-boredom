@@ -12,6 +12,8 @@ export interface State {
   gameState: GameState;
   name: string;
   uniqueUserId: string;
+  alertMessage: AlertMessage;
+  showAlert: boolean;
   question: Question | null;
   players: Array<Player>;
   hand: Array<string>;
@@ -21,6 +23,11 @@ export interface State {
   voteResult: Array<PlayerVote> | null;
   readyForNextRound: boolean;
   gameStarted: boolean;
+}
+
+export interface AlertMessage {
+  title: string;
+  message: string;
 }
 
 export interface PlayerVote {
@@ -49,6 +56,11 @@ export const useStore = defineStore("app", {
     return {
       name: useStorage("name", ""),
       uniqueUserId: useStorage("uniqueUserId", ""),
+      alertMessage: {
+        title: "",
+        message: ""
+      },
+      showAlert: false,
       players: [],
       hand: [],
       selectedCards: [],
@@ -106,6 +118,20 @@ export const useStore = defineStore("app", {
         this.selectedCards = [];
         this.selectedVoteOption = null;
       }
+    },
+    setAlertMessage(title: string, message: string) {
+      this.showAlert = true;
+      this.alertMessage = {
+        title,
+        message
+      };
+      setTimeout(() => {
+        this.showAlert = false;
+        this.alertMessage = {
+          title: "",
+          message: ""
+        };
+      }, 5000);
     }
   },
   getters: {

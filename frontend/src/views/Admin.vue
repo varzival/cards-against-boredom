@@ -10,16 +10,6 @@
   </AppBar>
 
   <v-main>
-    <v-alert
-      v-model="showAlert"
-      closable
-      title="ALAAARM!!"
-      text="Login fehlgeschlagen."
-      type="error"
-      style="position: absolute; top: 10vh; right: 5vw; z-index: 9999999"
-    >
-    </v-alert>
-
     <AdminEditDialog
       :id="selectedCard ? selectedCard._id : null"
       :modelValue="!!selectedCard"
@@ -243,7 +233,6 @@ const store = useStore();
 const adminPwd = ref("");
 const name = ref("");
 const isAdmin = ref(false);
-const showAlert = ref(false);
 const tab = ref("game");
 
 type QuestionType = {
@@ -319,23 +308,18 @@ async function login() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
+        //name: store.name,
         password: adminPwd.value
       })
     });
     isAdmin.value = await isAdminCheck();
     if (!isAdmin.value) {
       adminPwd.value = "";
-      showAlert.value = true;
-      setTimeout(() => {
-        showAlert.value = false;
-      }, 5000);
+      throw Error("Ungültige Zugangsdaten.");
     }
   } catch (e) {
     adminPwd.value = "";
-    showAlert.value = true;
-    setTimeout(() => {
-      showAlert.value = false;
-    }, 5000);
+    store.setAlertMessage("Login fehlgeschlagen", "Ungültige Zugangsdaten.");
   }
 }
 

@@ -18,8 +18,8 @@
       <v-row>
         <v-col cols="0" md="4"></v-col>
         <v-col>
-          <v-row class="name-input" align="center">
-            <v-col cols="10" align-self="center">
+          <v-row class="name-input" align="center" justify="center">
+            <v-col cols="12" md="10">
               <v-text-field
                 v-model="name"
                 label="Name"
@@ -28,8 +28,12 @@
                 @keyup.enter="setName"
               ></v-text-field>
             </v-col>
-            <v-col cols="2" align-self="center">
-              <v-btn @click="setName" :disabled="!name || !(name.length <= 30)">
+            <v-col cols="12" md="2">
+              <v-btn
+                class="button-center"
+                @click="setName"
+                :disabled="!name || !(name.length <= 30)"
+              >
                 Los!
               </v-btn>
             </v-col>
@@ -96,5 +100,10 @@ h2 {
   opacity: 0;
   animation: 0.5s linear 3.5s 1 fadeIn;
   animation-fill-mode: forwards;
+}
+
+.button-center {
+  display: block;
+  margin-left: auto;
 }
 </style>

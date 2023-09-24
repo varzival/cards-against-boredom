@@ -7,7 +7,7 @@ services:
 
   mongo:
     image: mongo
-    restart: always
+    restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: ${INITIAL_MONGO_PWD}
@@ -16,7 +16,9 @@ services:
 
   cards-against:
     image: ghcr.io/varzival/cards-against-boredom:latest
-    restart: always
+    depends_on:
+      - mongo
+    restart: unless-stopped
     ports:
       - 5000:5000
     environment:

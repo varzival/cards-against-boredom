@@ -88,7 +88,7 @@
         <v-col cols="1" md="4"></v-col>
         <v-col cols="10" md="4" align="center">
           <div class="tab-items">
-            <div v-if="tab === 'game'">
+            <div v-if="tab === 'game'" class="game-config-box">
               <template v-if="store.gameStarted">
                 <h2>Spiel läuft!</h2>
                 <div class="ma-5">
@@ -98,7 +98,21 @@
                   <v-btn @click="stopGame"> Spiel stoppen! </v-btn>
                 </div>
               </template>
-              <v-btn v-else @click="startGame"> Spiel starten! </v-btn>
+              <template v-else>
+                <div>
+                  <v-switch
+                    v-model="presentersMode"
+                    color="primary"
+                    :label="
+                      'Präsentiermodus ' +
+                      (presentersMode ? 'aktiv' : 'inaktiv')
+                    "
+                  ></v-switch>
+                </div>
+                <div>
+                  <v-btn @click="startGame"> Spiel starten! </v-btn>
+                </div>
+              </template>
             </div>
             <div v-if="tab == 'cards'">
               <v-row>
@@ -233,6 +247,7 @@ const store = useStore();
 const adminPwd = ref("");
 const name = ref("");
 const tab = ref("game");
+const presentersMode = ref(false);
 
 const progressBarCards = ref<any>(null);
 const progressBarQuestions = ref<any>(null);
@@ -314,7 +329,12 @@ async function login() {
 
 async function startGame() {
   await fetch("/api/game/start", {
-    method: "POST"
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ presentersMode: presentersMode.value })
   });
 }
 
@@ -341,6 +361,13 @@ function loadQuestions() {
 .tab-items {
   margin-top: 20px;
   width: 100%;
+}
+
+.game-config-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .question-num {

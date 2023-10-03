@@ -29,6 +29,9 @@ export class Game {
   @Prop()
   startedAt: Date;
 
+  @Prop()
+  presentersMode: boolean;
+
   @Prop({
     type: SchemaTypes.String,
     default: GameState.SELECT_CARD,

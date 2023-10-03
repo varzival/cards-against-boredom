@@ -51,7 +51,7 @@ export class GameService {
     return this.create();
   }
 
-  async start(game: GameDocument) {
+  async start(game: GameDocument, presentersMode: boolean) {
     if (game.startedAt) {
       this.logger.error(`game ${game.id} is already started`);
       throw new Error(`game ${game.id} is already started`);
@@ -64,6 +64,7 @@ export class GameService {
     }
 
     game.startedAt = new Date();
+    if (presentersMode) game.presentersMode = true;
 
     await game.save();
 
@@ -83,6 +84,7 @@ export class GameService {
     }
 
     game.startedAt = null;
+    game.presentersMode = false;
     game.state = GameState.SELECT_CARD;
 
     await game.save();
@@ -179,7 +181,7 @@ export class GameService {
   }
 
   allCardsChosen(game: Game) {
-    if (process.env.PRESENTERS_MODE) {
+    if (game.presentersMode) {
       for (const user of game.users.filter((u) => !u.isAdmin)) {
         if (user.selectedCards.length < game.questions[0].num) return false;
       }
@@ -193,7 +195,7 @@ export class GameService {
   }
 
   allVoted(game: GameDocument) {
-    if (process.env.PRESENTERS_MODE) {
+    if (game.presentersMode) {
       for (const user of game.users.filter((u) => u.isAdmin)) {
         if (user.votedFor === null) return false;
       }
@@ -207,7 +209,7 @@ export class GameService {
   }
 
   allContinue(game: GameDocument) {
-    if (process.env.PRESENTERS_MODE) {
+    if (game.presentersMode) {
       for (const user of game.users.filter((u) => u.isAdmin)) {
         if (!user.continue) return false;
       }

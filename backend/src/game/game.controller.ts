@@ -14,9 +14,9 @@ export class GameController {
 
   @UseGuards(AdminGuard)
   @Post("start")
-  async start() {
+  async start(@Body("presentersMode") presentersMode: boolean) {
     const game = await this.gameService.create();
-    await this.gameService.start(game);
+    await this.gameService.start(game, presentersMode);
     await this.gameGateway.sendGameStateToAll();
   }
 

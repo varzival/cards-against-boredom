@@ -317,9 +317,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userName = client.handshake.query.name;
     const uniqueId = client.handshake.query.uniqueId;
     if (!userName || !uniqueId) {
-      throw new WsException(
+      this.logger.error(
         `Wrong websocket handshake data ${userName} ${uniqueId}`
       );
+      client.emit("connect_failed", "Wrong data sent.");
+      return;
     }
 
     const assigned = await this.usersService.assignUserToGame(

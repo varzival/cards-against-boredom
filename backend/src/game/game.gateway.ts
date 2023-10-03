@@ -11,6 +11,7 @@ import {
 import { GameService } from "./game.service";
 import { Game, GameState } from "./schemas/game.schema";
 import { Server } from "socket.io";
+import { UsersService } from "../users/users.service";
 
 interface SelectCardsBody {
   cards: Array<number>;
@@ -26,7 +27,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(GameGateway.name);
 
-  constructor(private readonly gameService: GameService) {}
+  constructor(
+    private readonly gameService: GameService,
+    private readonly usersService: UsersService
+  ) {}
 
   connectedClients() {
     return this.webSocketServer.sockets.sockets;
@@ -135,7 +139,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const game = await this.gameService.findOne();
     const userName = client.handshake.query.name;
 
-    await this.gameService.deleteUserFromGame(userName, game);
+    await this.usersService.deleteUserFromGame(userName, game);
     await game.save();
 
     const clientsToDisconnect = [];
@@ -317,7 +321,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
     }
 
-    const assigned = await this.gameService.assignUserToGame(
+    const assigned = await this.usersService.assignUserToGame(
       userName,
       uniqueId,
       game

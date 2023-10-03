@@ -7,6 +7,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule } from "@nestjs/config";
 import { CardsModule } from "./cards/cards.module";
 import { QuestionsModule } from "./questions/questions.module";
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { QuestionsModule } from "./questions/questions.module";
     }),
     MongooseModule.forRoot(process.env.MONGO_DB_CONNECTION_STRING),
     CardsModule,
-    QuestionsModule
+    QuestionsModule,
+    UsersModule
   ]
 })
 export class AppModule {}

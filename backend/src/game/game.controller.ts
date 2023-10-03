@@ -2,12 +2,14 @@ import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { AdminGuard } from "../auth/admin.guard";
 import { GameGateway } from "./game.gateway";
 import { GameService } from "./game.service";
+import { UsersService } from "../users/users.service";
 
 @Controller("game")
 export class GameController {
   constructor(
     private gameService: GameService,
-    private gameGateway: GameGateway
+    private gameGateway: GameGateway,
+    private usersService: UsersService
   ) {}
 
   @UseGuards(AdminGuard)
@@ -31,7 +33,7 @@ export class GameController {
   async kick(@Body("name") name: string) {
     const game = await this.gameService.findOne();
     await this.gameGateway.sendKick(name);
-    await this.gameService.deleteUserFromGame(name, game);
+    await this.usersService.deleteUserFromGame(name, game);
     await this.gameGateway.sendPlayersToAll();
   }
 }

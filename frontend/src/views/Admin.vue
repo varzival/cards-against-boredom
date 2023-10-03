@@ -125,6 +125,7 @@
               </v-row>
               <v-row>
                 <v-progress-linear
+                  ref="progressBarCards"
                   v-if="!cardsAllLoaded"
                   indeterminate
                   color="yellow darken-2"
@@ -160,6 +161,7 @@
               </v-row>
               <v-row>
                 <v-progress-linear
+                  ref="progressBarQuestions"
                   v-if="!allQuestionsLoaded"
                   indeterminate
                   color="yellow darken-2"
@@ -229,11 +231,16 @@ import { useStore } from "@/store/app";
 import { ref, watch } from "vue";
 import CRUDObject from "../utils/CRUDObject";
 import isAdminCheck from "@/utils/adminCheck";
+import { useIntersectionObserver } from "@vueuse/core";
 
 const store = useStore();
 const adminPwd = ref("");
 const name = ref("");
 const tab = ref("game");
+
+const progressBarCards = ref<any>(null);
+const progressBarQuestions = ref<any>(null);
+defineExpose({ progressBarCards, progressBarQuestions });
 
 type QuestionType = {
   _id: string;
@@ -268,19 +275,12 @@ watch(
   }
 );
 
-window.onscroll = () => {
-  let bottomOfWindow =
-    document.documentElement.scrollTop + window.innerHeight ===
-    document.documentElement.offsetHeight;
-
-  if (bottomOfWindow) {
-    if (tab.value === "cards") {
-      cardsCRUD.load();
-    } else if (tab.value === "questions") {
-      questionsCRUD.load();
-    }
-  }
-};
+useIntersectionObserver(progressBarCards, () => {
+  cardsCRUD.load();
+});
+useIntersectionObserver(progressBarQuestions, () => {
+  questionsCRUD.load();
+});
 
 const rules = ref([
   (value: string) => !!value || "Required.",

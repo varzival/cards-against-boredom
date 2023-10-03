@@ -58,7 +58,7 @@ const { modelValue, admin } = defineProps<{
 function logout() {
   socket.emit("logout");
   store.reset();
-  delete_cookie("session", "/", window.location.hostname);
+  delete_cookie("session", "/");
 }
 
 async function kick(name: string) {

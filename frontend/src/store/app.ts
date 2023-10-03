@@ -90,7 +90,7 @@ export const useStore = defineStore("app", {
       this.$reset();
       this.name = ""; // necessary because of vueuse
       this.uniqueUserId = "";
-      delete_cookie("session", "/", window.location.hostname);
+      delete_cookie("session", "/");
     },
     setName(name: string) {
       this.uniqueUserId = uuid();

@@ -308,7 +308,8 @@ async function login() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        //name: store.name,
+        name: store.name,
+        uniqueId: store.uniqueUserId,
         password: adminPwd.value
       })
     });

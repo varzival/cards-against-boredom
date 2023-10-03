@@ -1,14 +1,27 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Game, GameDocument } from "../game/schemas/game.schema";
+import { Game, GameDocument, GameState } from "../game/schemas/game.schema";
 import { Model } from "mongoose";
 
 @Injectable()
 export class UsersService {
   constructor(@InjectModel(Game.name) private gameModel: Model<Game>) {}
 
+  async findOrCreateGame() {
+    let game = await this.gameModel.findOne();
+    if (!game) {
+      game = new this.gameModel({
+        startedAt: null,
+        state: GameState.SELECT_CARD,
+        users: []
+      });
+      await game.save();
+    }
+    return game;
+  }
+
   async setUserAdmin(userName: string, uniqueId: string) {
-    const game = await this.gameModel.findOne(); // TODO: deal with mutiple games
+    const game = await this.findOrCreateGame(); // TODO: deal with mutiple games
     const userIdx = game.users.findIndex((u) => u.name === userName);
     if (userIdx >= 0) {
       game.users[userIdx].isAdmin = true;

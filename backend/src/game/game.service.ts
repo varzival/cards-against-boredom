@@ -179,6 +179,13 @@ export class GameService {
   }
 
   allCardsChosen(game: Game) {
+    if (process.env.PRESENTERS_MODE) {
+      for (const user of game.users.filter((u) => !u.isAdmin)) {
+        if (user.selectedCards.length < game.questions[0].num) return false;
+      }
+      return true;
+    }
+
     for (const user of game.users) {
       if (user.selectedCards.length < game.questions[0].num) return false;
     }
@@ -186,6 +193,13 @@ export class GameService {
   }
 
   allVoted(game: GameDocument) {
+    if (process.env.PRESENTERS_MODE) {
+      for (const user of game.users.filter((u) => u.isAdmin)) {
+        if (user.votedFor === null) return false;
+      }
+      return true;
+    }
+
     for (const user of game.users) {
       if (user.votedFor === null) return false;
     }
@@ -193,6 +207,13 @@ export class GameService {
   }
 
   allContinue(game: GameDocument) {
+    if (process.env.PRESENTERS_MODE) {
+      for (const user of game.users.filter((u) => u.isAdmin)) {
+        if (!user.continue) return false;
+      }
+      return true;
+    }
+
     for (const user of game.users) {
       if (!user.continue) return false;
     }

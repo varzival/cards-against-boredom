@@ -30,6 +30,10 @@ After your players have entered the lobby via choosing a name on the landing pag
 
 Enjoy playing!
 
+## Presenters Mode
+
+...
+
 ## Demo
 
 [https://cab.varzival.eu/](https://cab.varzival.eu/)

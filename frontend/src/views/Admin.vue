@@ -1,6 +1,6 @@
 <template>
   <AppBar text="Adminbereich" :admin="true" :hideTabs="false">
-    <div v-if="isAdmin && store.name" class="tabs">
+    <div v-if="store.isAdmin && store.name" class="tabs">
       <v-tabs v-model="tab" align-with-title grow>
         <v-tab value="game">Spiel</v-tab>
         <v-tab value="cards">Karten</v-tab>
@@ -84,7 +84,7 @@
     </AdminEditDialog>
 
     <v-container fluid>
-      <v-row v-if="isAdmin && store.name">
+      <v-row v-if="store.isAdmin && store.name">
         <v-col cols="1" md="4"></v-col>
         <v-col cols="10" md="4" align="center">
           <div class="tab-items">
@@ -226,13 +226,13 @@ import AdminEditDialog from "@/components/AdminEditDialog.vue";
 import AppBar from "@/components/AppBar.vue";
 import Card from "@/components/Card.vue";
 import { useStore } from "@/store/app";
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import CRUDObject from "../utils/CRUDObject";
+import isAdminCheck from "@/utils/adminCheck";
 
 const store = useStore();
 const adminPwd = ref("");
 const name = ref("");
-const isAdmin = ref(false);
 const tab = ref("game");
 
 type QuestionType = {
@@ -258,16 +258,15 @@ const cards = cardsCRUD.all;
 const selectedCard = cardsCRUD.selected;
 const cardsAllLoaded = cardsCRUD.allLoaded;
 
-watch(isAdmin, async (newValue, _) => {
-  if (newValue) {
-    cardsCRUD.load();
-    questionsCRUD.load();
+watch(
+  () => store.isAdmin,
+  async (newValue, _) => {
+    if (newValue) {
+      cardsCRUD.load();
+      questionsCRUD.load();
+    }
   }
-});
-
-onMounted(async () => {
-  isAdmin.value = await isAdminCheck();
-});
+);
 
 window.onscroll = () => {
   let bottomOfWindow =
@@ -313,8 +312,8 @@ async function login() {
         password: adminPwd.value
       })
     });
-    isAdmin.value = await isAdminCheck();
-    if (!isAdmin.value) {
+    const res = await isAdminCheck();
+    if (!res) {
       adminPwd.value = "";
       throw Error("Ungültige Zugangsdaten.");
     }
@@ -334,16 +333,6 @@ async function stopGame() {
   await fetch("/api/game/stop", {
     method: "POST"
   });
-}
-
-async function isAdminCheck() {
-  try {
-    const response = await fetch("/api/auth/is_admin");
-    if (response.status <= 299) return true;
-    else return false;
-  } catch (e) {
-    return false;
-  }
 }
 </script>
 

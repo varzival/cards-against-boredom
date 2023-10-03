@@ -27,10 +27,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(GameGateway.name);
 
+  private presentersMode: boolean = !!process.env.PRESENTERS_MODE;
+
   constructor(
     private readonly gameService: GameService,
     private readonly usersService: UsersService
-  ) {}
+  ) {
+    this.logger.log(
+      `Presenter's mode: ${this.presentersMode ? "enabled" : "disabled"}`
+    );
+  }
 
   connectedClients() {
     return this.webSocketServer.sockets.sockets;
@@ -234,6 +240,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!game) return null;
     return {
       gameState: game.state,
+      presentersMode: this.presentersMode,
       players: this.getPlayers(game),
       hand: user?.cards?.map((c) => c.text),
       selectedCards: user?.selectedCards,

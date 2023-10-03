@@ -26,6 +26,7 @@ import { nextTick, onMounted, ref, watch } from "vue";
 import { createSocket, socket } from "./socket";
 import { State, useStore } from "./store/app";
 import { useDisplay } from "vuetify";
+import isAdminCheck from "./utils/adminCheck";
 
 const { mobile } = useDisplay();
 const store = useStore();
@@ -59,6 +60,7 @@ onMounted(() => {
   document.title = `Cards against ${
     import.meta.env.VITE_APP_TITLE ?? "BOREDOM"
   }`;
+  isAdminCheck();
 });
 
 watch(

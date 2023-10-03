@@ -9,7 +9,7 @@
           <Transition name="card" mode="out-in" appear>
             <v-row
               :no-gutters="true"
-              v-if="store.question"
+              v-if="store.displayLogic().question"
               :key="store.question?.text"
             >
               <v-col cols="1"></v-col>
@@ -24,9 +24,9 @@
               </v-col>
             </v-row>
           </Transition>
-          <TransitionGroup name="card" mode="out-in" appear>
+          <TransitionGroup name="card" appear>
             <v-row
-              v-if="store.gameState === GameState.SELECT_CARD && store.question"
+              v-if="store.displayLogic().hand && store.question"
               v-for="(card, idx) in store.hand"
               :key="card"
             >
@@ -47,11 +47,9 @@
               </v-col>
             </v-row>
           </TransitionGroup>
-          <TransitionGroup name="card" mode="out-in" appear>
+          <TransitionGroup name="card" appear>
             <v-row
-              v-if="
-                store.gameState === GameState.VOTE && store.voteOptions !== null
-              "
+              v-if="store.displayLogic().voteOptions && store.voteOptions"
               v-for="(vote_option, idx) in store.voteOptions"
               :key="idx"
               :class="['vote-option']"
@@ -63,13 +61,9 @@
               </v-col>
             </v-row>
           </TransitionGroup>
-          <TransitionGroup name="card" mode="out-in" appear>
+          <TransitionGroup name="card" appear>
             <v-row
-              v-if="
-                store.gameState === GameState.SHOW_RESULTS &&
-                store.voteResult !== null &&
-                store.voteOptions !== null
-              "
+              v-if="store.displayLogic().voteResult && store.voteOptions"
               v-for="(playerVote, idx) in store.voteResult"
             >
               <v-col cols="1"> </v-col>
@@ -108,7 +102,7 @@
             </v-row>
           </TransitionGroup>
           <v-row
-            v-if="store.voteResult !== null && store.voteOptions !== null"
+            v-if="store.displayLogic().continue"
             justify="center"
             class="continue-btn"
           >

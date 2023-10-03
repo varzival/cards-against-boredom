@@ -10,7 +10,9 @@ export enum GameState {
 }
 export interface State {
   gameState: GameState;
+  presentersMode: boolean;
   name: string;
+  isAdmin: boolean;
   uniqueUserId: string;
   alertMessage: AlertMessage;
   showAlert: boolean;
@@ -23,6 +25,14 @@ export interface State {
   voteResult: Array<PlayerVote> | null;
   readyForNextRound: boolean;
   gameStarted: boolean;
+}
+
+export interface DisplayLogic {
+  question: boolean;
+  hand: boolean;
+  voteOptions: boolean;
+  voteResult: boolean;
+  continue: boolean;
 }
 
 export interface AlertMessage {
@@ -55,6 +65,7 @@ export const useStore = defineStore("app", {
   state(): Overwrite<State, { name: any; uniqueUserId: any }> {
     return {
       name: useStorage("name", ""),
+      isAdmin: false,
       uniqueUserId: useStorage("uniqueUserId", ""),
       alertMessage: {
         title: "",
@@ -70,7 +81,8 @@ export const useStore = defineStore("app", {
       selectedVoteOption: null,
       voteResult: null,
       readyForNextRound: false,
-      gameState: GameState.SELECT_CARD
+      gameState: GameState.SELECT_CARD,
+      presentersMode: false
     };
   },
   actions: {
@@ -84,6 +96,9 @@ export const useStore = defineStore("app", {
       this.uniqueUserId = uuid();
       this.name = name;
     },
+    setIsAdmin(isAdmin: boolean) {
+      this.isAdmin = isAdmin;
+    },
     addPlayer(name: string) {
       this.players.push({
         name,
@@ -94,6 +109,8 @@ export const useStore = defineStore("app", {
     },
     setState(payload: State) {
       if (payload.gameState !== undefined) this.gameState = payload.gameState;
+      if (payload.presentersMode !== undefined)
+        this.presentersMode = payload.presentersMode;
       if (payload.players !== undefined) this.players = payload.players;
       if (payload.hand !== undefined) this.hand = payload.hand;
       if (payload.selectedCards !== undefined)
@@ -142,6 +159,45 @@ export const useStore = defineStore("app", {
         if (!results) return 0;
         return results.players?.filter((p) => p !== name)?.length ?? 0;
       };
+    },
+    displayLogic(state) {
+      let displayLogic: DisplayLogic;
+
+      if (state.presentersMode) {
+        displayLogic = {
+          question: !!state.question,
+          hand:
+            state.gameState === GameState.SELECT_CARD &&
+            !!state.question &&
+            !state.isAdmin,
+          voteOptions:
+            state.gameState === GameState.VOTE &&
+            state.voteOptions !== null &&
+            state.isAdmin,
+          voteResult:
+            state.gameState === GameState.SHOW_RESULTS &&
+            state.voteResult !== null &&
+            state.voteOptions !== null,
+          continue:
+            state.voteResult !== null &&
+            state.voteOptions !== null &&
+            state.isAdmin
+        };
+      } else {
+        displayLogic = {
+          question: !!state.question,
+          hand: state.gameState === GameState.SELECT_CARD && !!state.question,
+          voteOptions:
+            state.gameState === GameState.VOTE && state.voteOptions !== null,
+          voteResult:
+            state.gameState === GameState.SHOW_RESULTS &&
+            state.voteResult !== null &&
+            state.voteOptions !== null,
+          continue: state.voteResult !== null && state.voteOptions !== null
+        };
+      }
+
+      return () => displayLogic;
     }
   }
 });

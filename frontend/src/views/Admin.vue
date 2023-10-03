@@ -124,12 +124,10 @@
                 </v-col>
               </v-row>
               <v-row>
-                <v-progress-linear
-                  ref="progressBarCards"
+                <ProgressBarLoadingTriggerer
                   v-if="!cardsAllLoaded"
-                  indeterminate
-                  color="yellow darken-2"
-                ></v-progress-linear>
+                  @intersect="loadCards"
+                ></ProgressBarLoadingTriggerer>
               </v-row>
             </div>
             <div v-if="tab == 'questions'">
@@ -160,12 +158,10 @@
                 </v-col>
               </v-row>
               <v-row>
-                <v-progress-linear
-                  ref="progressBarQuestions"
+                <ProgressBarLoadingTriggerer
                   v-if="!allQuestionsLoaded"
-                  indeterminate
-                  color="yellow darken-2"
-                ></v-progress-linear>
+                  @intersect="loadQuestions"
+                ></ProgressBarLoadingTriggerer>
               </v-row>
             </div>
           </div>
@@ -227,11 +223,11 @@
 import AdminEditDialog from "@/components/AdminEditDialog.vue";
 import AppBar from "@/components/AppBar.vue";
 import Card from "@/components/Card.vue";
+import ProgressBarLoadingTriggerer from "@/components/ProgressBarLoadingTriggerer.vue";
 import { useStore } from "@/store/app";
 import { ref, watch } from "vue";
 import CRUDObject from "../utils/CRUDObject";
 import isAdminCheck from "@/utils/adminCheck";
-import { useIntersectionObserver } from "@vueuse/core";
 
 const store = useStore();
 const adminPwd = ref("");
@@ -274,13 +270,6 @@ watch(
     }
   }
 );
-
-useIntersectionObserver(progressBarCards, () => {
-  cardsCRUD.load();
-});
-useIntersectionObserver(progressBarQuestions, () => {
-  questionsCRUD.load();
-});
 
 const rules = ref([
   (value: string) => !!value || "Required.",
@@ -333,6 +322,14 @@ async function stopGame() {
   await fetch("/api/game/stop", {
     method: "POST"
   });
+}
+
+function loadCards() {
+  cardsCRUD.load();
+}
+
+function loadQuestions() {
+  questionsCRUD.load();
 }
 </script>
 

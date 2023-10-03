@@ -247,7 +247,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async sendGameStateToAll() {
-    const game = await this.gameService.findOne();
+    const game = await this.gameService.findOneOrCreate();
     for (const [clientID, socket] of this.connectedClients().entries()) {
       const user = game.users?.find(
         (u) => u.name === socket.handshake.query.name
@@ -306,12 +306,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(
       `Connected to ${client.handshake.query.name}, id ${client.id}, from ${client.handshake.address}`
     );
+
     let game = await this.gameService.findOneOrCreate();
 
     const userName = client.handshake.query.name;
     const uniqueId = client.handshake.query.uniqueId;
     if (!userName || !uniqueId) {
-      throw new WsException("Wrong websocket handshake data");
+      throw new WsException(
+        `Wrong websocket handshake data ${userName} ${uniqueId}`
+      );
     }
 
     const assigned = await this.gameService.assignUserToGame(

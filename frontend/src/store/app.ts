@@ -81,8 +81,8 @@ export const useStore = defineStore("app", {
       delete_cookie("session", "/", window.location.hostname);
     },
     setName(name: string) {
-      this.name = name;
       this.uniqueUserId = uuid();
+      this.name = name;
     },
     addPlayer(name: string) {
       this.players.push({

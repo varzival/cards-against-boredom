@@ -51,7 +51,7 @@ function initSocket() {
 }
 
 onMounted(() => {
-  if (store.name) {
+  if (store.name && store.uniqueUserId) {
     nextTick(async () => {
       initSocket();
     });
@@ -64,7 +64,7 @@ onMounted(() => {
 watch(
   () => store.name,
   (newValue) => {
-    if (newValue && !socket.connected) {
+    if (newValue && store.uniqueUserId && !socket.connected) {
       initSocket();
     }
   }

@@ -11,6 +11,7 @@ export enum GameState {
 
 export interface User extends Document {
   id: string;
+  uniqueId: string;
   name: string;
   points: number;
   cards: Array<Card>;
@@ -18,6 +19,7 @@ export interface User extends Document {
   voteOrder: number;
   votedFor: number;
   continue: boolean;
+  isAdmin: boolean;
 }
 
 export type GameDocument = HydratedDocument<Game>;
@@ -36,6 +38,7 @@ export class Game {
 
   @Prop([
     raw({
+      uniqueId: SchemaTypes.String,
       name: SchemaTypes.String,
       points: { type: SchemaTypes.Number, default: 0 },
       cards: {
@@ -45,7 +48,8 @@ export class Game {
       selectedCards: [SchemaTypes.Number],
       voteOrder: SchemaTypes.Number,
       votedFor: SchemaTypes.Number,
-      continue: { type: SchemaTypes.Boolean, default: false }
+      continue: { type: SchemaTypes.Boolean, default: false },
+      isAdmin: { type: SchemaTypes.Boolean, default: false }
     })
   ])
   users: Array<User>;

@@ -32,12 +32,12 @@ export class GameService {
   async create() {
     let game = await this.findOne();
     if (!game) {
-      const game = new this.gameModel({
+      game = new this.gameModel({
         startedAt: null,
         state: GameState.SELECT_CARD,
         users: []
       });
-      game.save();
+      await game.save();
     }
     return game;
   }
@@ -214,7 +214,11 @@ export class GameService {
       .exec();
   }
 
-  async assignUserToGame(userName: string, game: GameDocument) {
+  async assignUserToGame(
+    userName: string,
+    uniqueId: string,
+    game: GameDocument
+  ) {
     if (!game.users?.find((u) => u.name === userName)) {
       return this.gameModel
         .updateOne(
@@ -222,13 +226,15 @@ export class GameService {
           {
             $push: {
               users: {
+                uniqueId: uniqueId,
                 name: userName,
                 points: 0,
                 cards: [],
                 selectedCards: [],
                 voteOrder: null,
                 votedFor: null,
-                continue: false
+                continue: false,
+                isAdmin: false
               }
             }
           }
@@ -251,5 +257,16 @@ export class GameService {
         }
       )
       .exec();
+  }
+
+  async setUserAdmin(userName: string) {
+    const game = await this.findOne();
+    const userIdx = game.users.findIndex((u) => u.name === userName);
+    if (userIdx >= 0) {
+      game.users[userIdx].isAdmin = true;
+      await game.save();
+      return;
+    }
+    throw new Error("User not found");
   }
 }

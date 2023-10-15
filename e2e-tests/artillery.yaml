@@ -1,0 +1,11 @@
+config:
+  target: https://cab.varzival.eu/
+  engines:
+    playwright: {}
+  processor: "./testFunctions.js"
+  phases:
+    - arrivalRate: 1
+      duration: 30
+scenarios:
+  - engine: playwright
+    testFunction: "loginLogout"

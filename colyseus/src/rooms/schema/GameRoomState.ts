@@ -18,12 +18,12 @@ export class Question extends Schema {
 
 export class User extends Schema {
   @type("string") name: string;
-  @type("string") points: number;
+  @type("number") points: number = 0;
   @type([Card]) cards: ArraySchema<Card>;
   @type(["number"]) selectedCards: ArraySchema<number>;
-  @type("number") voteOrder: number;
-  @type("number") votedFor: number;
-  @type("boolean") continue: boolean;
+  @type("number") voteOrder: number | null = null;
+  @type("number") votedFor: number | null = null;
+  @type("boolean") continue: boolean = false;
   @type("boolean") isAdmin: boolean;
 }
 

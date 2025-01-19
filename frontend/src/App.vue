@@ -75,8 +75,15 @@ async function initSocket() {
         client.resetRoom();
       });
     } catch (e) {
-      // TODO: handle connection error
       console.error("connection error", e);
+      store.setName("");
+      // TODO: maybe not reset it in case that the server is down
+      // but then the server needs to persist this value
+      store.setReconnectionToken("");
+      store.setAlertMessage(
+        "Verbindung fehlgeschlagen",
+        "Server ist nicht erreichbar :-("
+      );
     }
   }
 }

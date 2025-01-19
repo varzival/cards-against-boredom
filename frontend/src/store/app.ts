@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { useStorage } from "@vueuse/core";
-import { v4 as uuid } from "uuid";
 import { delete_cookie } from "../utils/cookies";
 
 export enum GameState {
@@ -11,7 +10,6 @@ export enum GameState {
 export interface State {
   gameState: GameState;
   presentersMode: boolean;
-  name: string;
   isAdmin: boolean;
   alertMessage: AlertMessage;
   showAlert: boolean;
@@ -64,7 +62,7 @@ export const useStore = defineStore("app", {
   state(): Overwrite<State, { name: any; reconnectionToken: any }> {
     return {
       name: useStorage("name", ""),
-      reconnectionToken: useStorage("reconnectionToken", uuid()),
+      reconnectionToken: useStorage("reconnectionToken", ""),
       isAdmin: false,
       alertMessage: {
         title: "",
@@ -87,7 +85,8 @@ export const useStore = defineStore("app", {
   actions: {
     reset() {
       this.$reset();
-      this.name = ""; // necessary because of vueuse
+      this.name = ""; // necessary because of vueuse.
+      this.reconnectionToken = "";
       delete_cookie("session", "/");
     },
     setName(name: string) {

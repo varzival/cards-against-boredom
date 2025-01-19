@@ -15,13 +15,22 @@ class ColyseusClient {
     this.client = new Client("ws://localhost:5000");
   }
 
-  public async connect(name: string) {
+  private async tryReconnect(name: string, reconnectionToken: string) {
     try {
-      this._room = await this.client.joinOrCreate("game_room", { name });
+      this._room = await this.client.reconnect(reconnectionToken);
     } catch (e) {
-      console.error("join error", e);
+      console.error("reconnect error", e);
+      this._room = await this.client.joinOrCreate("game_room", { name });
     }
+  }
 
+  public async connect(name: string, reconnectionToken?: string) {
+    if (reconnectionToken) {
+      await this.tryReconnect(name, reconnectionToken);
+    } else {
+      this._room = await this.client.joinOrCreate("game_room", { name });
+    }
+    return this._room?.reconnectionToken;
     // TODO retry
   }
 
@@ -30,6 +39,10 @@ class ColyseusClient {
       await this._room.leave();
       this._room = null;
     }
+  }
+
+  public async resetRoom() {
+    this._room = null;
   }
 }
 

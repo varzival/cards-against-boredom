@@ -33,40 +33,60 @@ const store = useStore();
 
 async function initSocket() {
   if (!client.connected) {
-    await client.connect(store.name);
+    try {
+      const reconnectionToken = await client.connect(
+        store.name,
+        store.reconnectionToken
+      );
+      if (reconnectionToken) {
+        store.setReconnectionToken(reconnectionToken);
+      }
+      // TODO handle connection error, handle name already taken
+
+      client.room?.onStateChange((state) => {
+        // fix for firefox
+        if (!store.name) {
+          const sessionId = client.room?.sessionId;
+          const nameAfterReconnect =
+            client.room?.state.users.get(sessionId)?.name;
+          store.setName(nameAfterReconnect ?? store.name);
+        }
+
+        const players = Array.from(state.users.values() as any[]);
+        store.setState({
+          players: players.map((p) => {
+            return {
+              name: p.name,
+              points: p.points,
+              active: p.active,
+              selectionMade: false
+            };
+          })
+        });
+      });
+
+      client.room?.onError((code, message) => {
+        console.error(`[colyseus] ${code} - ${message}`);
+      });
+
+      client.room?.onLeave((data) => {
+        console.log("onLeave", data);
+        store.reset();
+        client.resetRoom();
+      });
+    } catch (e) {
+      // TODO: handle connection error
+      console.error("connection error", e);
+    }
   }
-  // TODO handle connection error, handle name already taken
-
-  client.room!.onStateChange((state) => {
-    const players = Array.from(state.users.values() as any[]);
-    store.setState({
-      players: players.map((p) => {
-        return {
-          name: p.name,
-          points: p.points,
-          active: true,
-          selectionMade: false
-        };
-      })
-    });
-  });
-
-  client.room!.onError((code, message) => {
-    console.error(`[colyseus] ${code} - ${message}`);
-  });
-
-  client.room!.onLeave(() => {
-    console.log("room left");
-    store.reset();
-  });
 }
 
 onMounted(() => {
-  if (store.name) {
-    nextTick(async () => {
+  nextTick(async () => {
+    if (store.reconnectionToken) {
       initSocket();
-    });
-  }
+    }
+  });
   document.title = `Cards against ${
     import.meta.env.VITE_APP_TITLE ?? "BOREDOM"
   }`;

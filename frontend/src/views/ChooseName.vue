@@ -61,7 +61,6 @@ const rules = ref([
 
 function setName() {
   store.setName(name.value);
-  store.addPlayer(name.value);
 }
 </script>
 

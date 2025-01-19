@@ -25,6 +25,7 @@ export class User extends Schema {
   @type("number") votedFor: number | null = null;
   @type("boolean") continue: boolean = false;
   @type("boolean") isAdmin: boolean;
+  @type("boolean") active: boolean = true;
 }
 
 export class GameRoomState extends Schema {

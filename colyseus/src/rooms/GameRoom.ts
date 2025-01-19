@@ -30,6 +30,7 @@ export class GameRoom extends Room<GameRoomState> {
   maxClients = 100;
 
   async onCreate() {
+    // TODO load from database
     this.setState(new GameRoomState());
     this.roomId = "game_room";
 
@@ -286,9 +287,21 @@ export class GameRoom extends Room<GameRoomState> {
     this.state.users.set(client.sessionId, new User({ name: options.name }));
   }
 
-  onLeave(client: Client, consented: boolean) {
+  async onLeave(client: Client, consented: boolean) {
     console.log(client.sessionId, "left! consented:", consented);
-    this.state.users.delete(client.sessionId);
+    if (consented) {
+      this.state.users.delete(client.sessionId);
+    } else {
+      this.state.users.get(client.sessionId).active = false;
+      try {
+        await this.allowReconnection(client, 60);
+        console.log(client.sessionId, "reconnected!");
+        this.state.users.get(client.sessionId).active = true;
+      } catch (e) {
+        // reconnection expired. remove player
+        this.state.users.delete(client.sessionId);
+      }
+    }
   }
 
   onDispose() {

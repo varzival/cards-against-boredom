@@ -34,6 +34,10 @@ export default defineConfig({
         target: "ws://localhost:5000",
         ws: true
       },
+      "/colyseus": {
+        target: "ws://localhost:5000",
+        ws: true
+      },
       "/api": "http://localhost:5000"
     }
   }

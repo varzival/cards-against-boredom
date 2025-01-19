@@ -94,14 +94,14 @@ export class GameRoom extends Room<GameRoomState> {
     this.onMessage("vote", (client, data) => {
       this.checkStarted();
       this.checkGameState(GameState.VOTE);
-      if (!(typeof data.votedFor === "number")) {
+      if (!(typeof data.voteOption === "number")) {
         throw new Error("Invalid data type for vote");
       }
-      if (data.votedFor < 0 || data.votedFor >= this.state.users.size) {
+      if (data.voteOption < 0 || data.voteOption >= this.state.users.size) {
         throw new Error("Invalid vote");
       }
       const user = this.getUser(client.sessionId);
-      user.votedFor = data.votedFor;
+      user.votedFor = data.voteOption;
       if (this.allVoted()) {
         this.state.gameState = GameState.SHOW_RESULTS;
         this.calculatePoints();

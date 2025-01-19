@@ -2,7 +2,7 @@
   <v-navigation-drawer
     app
     :modelValue="modelValue"
-    @update:modelValue="(newValue) => emit('update:modelValue', newValue)"
+    @update:modelValue="(newValue: boolean) => emit('update:modelValue', newValue)"
   >
     <div class="container">
       <v-list>
@@ -41,8 +41,8 @@
 
 <script lang="ts" setup>
 import { useStore } from "@/store/app";
-import { socket } from "@/socket";
 import { delete_cookie } from "@/utils/cookies";
+import client from "@/socket/colyseus";
 
 const store = useStore();
 
@@ -56,7 +56,11 @@ const { modelValue, admin } = defineProps<{
 }>();
 
 function logout() {
-  socket.emit("logout");
+  if (client.connected) {
+    client.leave();
+  } else {
+    console.error("Client not connected, can't log out.");
+  }
   store.reset();
   delete_cookie("session", "/");
 }

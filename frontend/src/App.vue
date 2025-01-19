@@ -23,36 +23,46 @@
 
 <script lang="ts" setup>
 import { nextTick, onMounted, ref, watch } from "vue";
-import { createSocket, socket } from "./socket";
-import { State, useStore } from "./store/app";
+import client from "./socket/colyseus";
+import { useStore } from "./store/app";
 import { useDisplay } from "vuetify";
 import isAdminCheck from "./utils/adminCheck";
 
 const { mobile } = useDisplay();
 const store = useStore();
 
-function initSocket() {
-  createSocket(store.name, store.uniqueUserId);
+async function initSocket() {
+  if (!client.connected) {
+    await client.connect(store.name);
+  }
+  // TODO handle connection error, handle name already taken
 
-  if (!socket.connected) socket.connect();
-
-  socket.on("gameState", (payload: State) => {
-    store.setState(payload);
+  client.room!.onStateChange((state) => {
+    const players = Array.from(state.users.values() as any[]);
+    store.setState({
+      players: players.map((p) => {
+        return {
+          name: p.name,
+          points: p.points,
+          active: true,
+          selectionMade: false
+        };
+      })
+    });
   });
 
-  socket.on("kick", () => {
-    store.reset();
+  client.room!.onError((code, message) => {
+    console.error(`[colyseus] ${code} - ${message}`);
   });
 
-  socket.on("connect_failed", () => {
-    console.error("Connection Failed");
+  client.room!.onLeave(() => {
+    console.log("room left");
     store.reset();
-    store.setAlertMessage("Login fehlgeschlagen", "Name existiert bereits");
   });
 }
 
 onMounted(() => {
-  if (store.name && store.uniqueUserId) {
+  if (store.name) {
     nextTick(async () => {
       initSocket();
     });
@@ -66,7 +76,7 @@ onMounted(() => {
 watch(
   () => store.name,
   (newValue) => {
-    if (newValue && store.uniqueUserId && !socket.connected) {
+    if (newValue && !client.connected) {
       initSocket();
     }
   }

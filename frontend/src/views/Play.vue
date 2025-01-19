@@ -121,16 +121,17 @@
 <script lang="ts" setup>
 import Card from "@/components/Card.vue";
 import VoteOption from "@/components/VoteOption.vue";
-import { socket } from "@/socket";
 import { useStore, GameState } from "@/store/app";
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import AppBar from "@/components/AppBar.vue";
+import client from "@/socket/colyseus";
 
 const store = useStore();
 const { pointsForPlayer } = storeToRefs(store);
 
 function selectCard(idx: number) {
+  if (!client.connected) return;
   if (!store.question) return;
   if (store.selectedCards.length < store.question.card_number) {
     if (store.selectedCards.includes(idx)) store.selectedCards = [];
@@ -141,17 +142,19 @@ function selectCard(idx: number) {
   }
 
   if (store.selectedCards.length >= store.question.card_number) {
-    socket.emit("selectCards", { cards: store.selectedCards });
+    client.room?.send("selectCards", { cards: store.selectedCards });
   }
 }
 
 function vote(idx: number) {
+  if (!client.connected) return;
   store.selectedVoteOption = idx;
-  socket.emit("vote", { voteOption: store.selectedVoteOption });
+  client.room?.send("vote", { voteOption: store.selectedVoteOption });
 }
 
 function continuePlay() {
-  socket.emit("continue");
+  if (!client.connected) return;
+  client.room?.send("continue");
 }
 
 const stateText = computed<string>(() => {

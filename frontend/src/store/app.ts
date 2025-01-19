@@ -13,7 +13,6 @@ export interface State {
   presentersMode: boolean;
   name: string;
   isAdmin: boolean;
-  uniqueUserId: string;
   alertMessage: AlertMessage;
   showAlert: boolean;
   question: Question | null;
@@ -62,11 +61,11 @@ export interface Question {
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
 
 export const useStore = defineStore("app", {
-  state(): Overwrite<State, { name: any; uniqueUserId: any }> {
+  state(): Overwrite<State, { name: any; reconnectionToken: any }> {
     return {
       name: useStorage("name", ""),
+      reconnectionToken: useStorage("reconnectionToken", uuid()),
       isAdmin: false,
-      uniqueUserId: useStorage("uniqueUserId", ""),
       alertMessage: {
         title: "",
         message: ""
@@ -89,12 +88,13 @@ export const useStore = defineStore("app", {
     reset() {
       this.$reset();
       this.name = ""; // necessary because of vueuse
-      this.uniqueUserId = "";
       delete_cookie("session", "/");
     },
     setName(name: string) {
-      this.uniqueUserId = uuid();
       this.name = name;
+    },
+    setReconnectionToken(reconnectionToken: string) {
+      this.reconnectionToken = reconnectionToken;
     },
     setIsAdmin(isAdmin: boolean) {
       this.isAdmin = isAdmin;
@@ -107,7 +107,8 @@ export const useStore = defineStore("app", {
         selectionMade: false
       });
     },
-    setState(payload: State) {
+    // TODO import state typing from colyseus server
+    setState(payload: Partial<State>) {
       if (payload.gameState !== undefined) this.gameState = payload.gameState;
       if (payload.presentersMode !== undefined)
         this.presentersMode = payload.presentersMode;

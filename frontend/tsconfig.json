@@ -15,7 +15,8 @@
     "lib": ["esnext", "dom"],
     "types": [
       "node",
-      "vuetify"
+      "vuetify",
+	  "web-bluetooth"
     ],
     "paths": {
       "@/*": ["src/*"]

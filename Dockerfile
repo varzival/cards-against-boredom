@@ -1,4 +1,4 @@
-FROM node:16-alpine
+FROM node:20-alpine
 
 ARG VITE_APP_TITLE
 
@@ -9,13 +9,13 @@ COPY ./frontend .
 RUN VITE_APP_TITLE=${VITE_APP_TITLE} npm run build
 
 WORKDIR /app
-COPY ./backend/package.json ./backend/package-lock.json ./
+COPY ./colyseus/package.json ./colyseus/package-lock.json ./
 RUN npm install
-COPY ./backend .
+COPY ./colyseus .
 RUN npm run build
 
 RUN cp -r ../frontend/dist ./
 
 EXPOSE 5000
 
-CMD ["node", "build/main.js"]
+CMD ["node", "build/index.js"]

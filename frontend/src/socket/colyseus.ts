@@ -11,8 +11,10 @@ class ColyseusClient {
   }
 
   constructor() {
-    // TODO make configurable
-    this.client = new Client("ws://localhost:5000");
+    // proxy doesn't really work, so hard coding for local development
+    this.client = new Client(
+      import.meta.env.VITE_COLYSEUS_URL ?? "ws://localhost:5000"
+    );
   }
 
   private async tryReconnect(name: string, reconnectionToken: string) {

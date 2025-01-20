@@ -2,7 +2,7 @@
   <v-dialog
     :modelValue="modelValue"
     @update:modelValue="
-      (newValue) => {
+      (newValue: boolean) => {
         if (!newValue) {
           ask4Real = false;
           emit('update:modelValue', null);

@@ -1,7 +1,16 @@
 import config from "@colyseus/tools";
 import { monitor } from "@colyseus/monitor";
 import { playground } from "@colyseus/playground";
+import apiRouter from "./api/AdminApi";
+import loginRouter from "./api/LoginApi";
 import express from "express";
+import session from "express-session";
+
+declare module "express-session" {
+  interface SessionData {
+    isAdmin?: boolean;
+  }
+}
 
 /**
  * Import your Room files
@@ -23,11 +32,20 @@ export default config({
      * Bind your custom express routes here:
      * Read more: https://expressjs.com/en/starter/basic-routing.html
      */
-    app.get("/api", (req, res) => {
-      res.send("API");
-    });
+    app.use(
+      session({
+        secret:
+          process.env.SECRET || "verysecretkeydonttellanyonethankyouverymuch",
+      })
+    );
+    app.use(express.json());
+    app.use("/api/auth", loginRouter);
+    app.use("/api", apiRouter);
 
-    app.use(["/", "/admin"], express.static("./dist"));
+    app.use("/", express.static("./dist"));
+    app.get("/admin", (req, res) => {
+      res.sendFile("index.html", { root: "./dist" });
+    });
 
     /**
      * Use @colyseus/playground

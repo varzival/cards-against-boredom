@@ -41,7 +41,6 @@
 
 <script lang="ts" setup>
 import { useStore } from "@/store/app";
-import { delete_cookie } from "@/utils/cookies";
 import client from "@/socket/colyseus";
 
 const store = useStore();
@@ -62,7 +61,12 @@ function logout() {
     console.error("Client not connected, can't log out.");
   }
   store.reset();
-  delete_cookie("session", "/");
+  fetch("/api/auth/logout", {
+    method: "POST"
+  }).catch((e) => {
+    console.error("Error logging out", e);
+    store.setAlertMessage("Fehler beim Ausloggen", "Bitte versue es erneut.");
+  });
 }
 
 async function kick(name: string) {

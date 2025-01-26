@@ -34,42 +34,6 @@ export class GameRoom extends Room<GameRoomState> {
     this.setState(new GameRoomState());
     this.roomId = "game_room";
 
-    this.onMessage("start", async (client, data) => {
-      // TODO check for admin auth
-      if (this.state.startedAt) {
-        throw new Error("Game has already been started");
-      }
-      await this.shuffleDeck();
-      await this.shuffleQuestions();
-      for (const user of this.state.users.values()) {
-        await this.dealCards(user);
-      }
-      if (data.presentersMode) {
-        this.state.presentersMode = true;
-      }
-
-      this.state.startedAt = new Date().toISOString();
-    });
-
-    this.onMessage("stop", async () => {
-      if (!this.state.startedAt) {
-        throw new Error("Game hasn't been started yet");
-      }
-      this.state.startedAt = undefined;
-      this.state.presentersMode = false;
-      this.state.gameState = GameState.SELECT_CARD;
-      this.state.cards.clear();
-      this.state.questions.clear();
-      for (const user of this.state.users.values()) {
-        user.cards.clear();
-        user.selectedCards.clear();
-        user.voteOrder = -1;
-        user.votedFor = -1;
-        user.points = 0;
-        user.continue = false;
-      }
-    });
-
     this.onMessage("selectCards", (client, data) => {
       this.checkStarted();
       this.checkGameState(GameState.SELECT_CARD);
@@ -118,6 +82,41 @@ export class GameRoom extends Room<GameRoomState> {
         this.state.gameState = GameState.SELECT_CARD;
       }
     });
+  }
+
+  public async start(presentersMode: boolean) {
+    if (this.state.startedAt) {
+      throw new Error("Game has already been started");
+    }
+    await this.shuffleDeck();
+    await this.shuffleQuestions();
+    for (const user of this.state.users.values()) {
+      await this.dealCards(user);
+    }
+    if (presentersMode) {
+      this.state.presentersMode = true;
+    }
+
+    this.state.startedAt = new Date().toISOString();
+  }
+
+  public async stop() {
+    if (!this.state.startedAt) {
+      throw new Error("Game hasn't been started yet");
+    }
+    this.state.startedAt = null;
+    this.state.presentersMode = false;
+    this.state.gameState = GameState.SELECT_CARD;
+    this.state.cards.clear();
+    this.state.questions.clear();
+    for (const user of this.state.users.values()) {
+      user.cards.clear();
+      user.selectedCards.clear();
+      user.voteOrder = -1;
+      user.votedFor = -1;
+      user.points = 0;
+      user.continue = false;
+    }
   }
 
   getUser(sessionId: string) {

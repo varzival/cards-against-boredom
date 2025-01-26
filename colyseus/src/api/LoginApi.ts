@@ -23,7 +23,6 @@ router.post("/logout", (req, res) => {
 });
 
 router.get("/is_admin", (req, res) => {
-  console.log("is admin check", req.session);
   req.session.isAdmin ? res.sendStatus(200) : res.sendStatus(401);
 });
 

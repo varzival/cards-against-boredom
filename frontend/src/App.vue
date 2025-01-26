@@ -45,15 +45,17 @@ async function initSocket() {
 
       client.room?.onStateChange((state) => {
         // fix for firefox
-        if (!store.name) {
-          const sessionId = client.room?.sessionId;
-          const nameAfterReconnect =
-            client.room?.state.users.get(sessionId)?.name;
-          store.setName(nameAfterReconnect ?? store.name);
-        }
+        // if (!store.name) {
+        //   const sessionId = client.room?.sessionId;
+        //   const nameAfterReconnect =
+        //     client.room?.state.users.get(sessionId)?.name;
+        //   store.setName(nameAfterReconnect ?? store.name);
+        // }
+        console.log("onStateChange", state);
 
         const players = Array.from(state.users.values() as any[]);
         store.setState({
+          ...state,
           players: players.map((p) => {
             return {
               name: p.name,

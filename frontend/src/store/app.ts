@@ -21,7 +21,7 @@ export interface State {
   selectedVoteOption: number | null;
   voteResult: Array<PlayerVote> | null;
   readyForNextRound: boolean;
-  gameStarted: boolean;
+  startedAt: string | null;
 }
 
 export interface DisplayLogic {
@@ -73,7 +73,7 @@ export const useStore = defineStore("app", {
       hand: [],
       selectedCards: [],
       question: null,
-      gameStarted: false,
+      startedAt: null,
       voteOptions: null,
       selectedVoteOption: null,
       voteResult: null,
@@ -128,8 +128,8 @@ export const useStore = defineStore("app", {
         this.voteResult = payload.voteResult;
       if (payload.readyForNextRound !== undefined)
         this.readyForNextRound = payload.readyForNextRound;
-      if (payload.gameStarted !== undefined)
-        this.gameStarted = payload.gameStarted;
+
+      this.startedAt = payload.startedAt ?? null;
 
       if (payload.gameState === GameState.SHOW_RESULTS) {
         this.selectedCards = [];
@@ -152,6 +152,9 @@ export const useStore = defineStore("app", {
     }
   },
   getters: {
+    gameStarted(state) {
+      return !!state.startedAt;
+    },
     pointsForPlayer(state) {
       return (name: string) => {
         if (!state.voteResult) return 0;

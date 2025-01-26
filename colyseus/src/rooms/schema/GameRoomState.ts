@@ -19,8 +19,8 @@ export class Question extends Schema {
 export class User extends Schema {
   @type("string") name: string;
   @type("number") points: number = 0;
-  @type([Card]) cards: ArraySchema<Card>;
-  @type(["number"]) selectedCards: ArraySchema<number>;
+  @type([Card]) cards: ArraySchema<Card> = new ArraySchema();
+  @type(["number"]) selectedCards: ArraySchema<number> = new ArraySchema();
   @type("number") voteOrder: number | null = null;
   @type("number") votedFor: number | null = null;
   @type("boolean") continue: boolean = false;
@@ -29,7 +29,7 @@ export class User extends Schema {
 }
 
 export class GameRoomState extends Schema {
-  @type("string") startedAt: string | null;
+  @type("string") startedAt: string | null = null;
   @type("string") gameState: GameStateType = GameState.SELECT_CARD;
   @type("boolean")
   presentersMode: boolean = false;

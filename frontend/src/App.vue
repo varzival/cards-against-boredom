@@ -22,7 +22,7 @@
 </template>
 
 <script lang="ts" setup>
-import { nextTick, onMounted, ref, watch } from "vue";
+import { nextTick, onMounted, watch } from "vue";
 import client from "./socket/colyseus";
 import { useStore } from "./store/app";
 import { useDisplay } from "vuetify";
@@ -36,6 +36,7 @@ async function initSocket() {
     try {
       const reconnectionToken = await client.connect(
         store.name,
+        store.uniqueId,
         store.reconnectionToken
       );
       if (reconnectionToken) {
@@ -54,6 +55,12 @@ async function initSocket() {
         console.log("onStateChange", state);
 
         const players = Array.from(state.users.values() as any[]);
+        const self = players.find((p) => p.name === store.name);
+        if (!self) {
+          console.error("self not found in players");
+          return;
+        }
+
         store.setState({
           ...state,
           players: players.map((p) => {
@@ -63,8 +70,22 @@ async function initSocket() {
               active: p.active,
               selectionMade: false
             };
-          })
+          }),
+          hand: self.cards.map((c: any) => ({ text: c.text })),
+          question: state.questions?.map((q: any) => ({
+            text: q.text,
+            num: q.num
+          }))[0], // TODO
+          voteOptions: state.voteOptions.map((o: any) =>
+            o.cards.map((c: any) => c.text)
+          ),
+          voteResults: state.voteResults.map((r: any) => ({
+            owner: r.owner,
+            vote: r.vote,
+            players: r.players.map((p: any) => p)
+          }))
         });
+        console.log(store.voteResults);
       });
 
       client.room?.onError((code, message) => {

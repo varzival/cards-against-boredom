@@ -35,11 +35,11 @@
               </v-col>
               <v-col>
                 <Card
-                  :text="card"
+                  :text="card.text"
                   light
                   selectable
                   :faded="
-                    store.selectedCards.length >= store.question.card_number &&
+                    store.selectedCards.length >= store.question.num &&
                     !store.selectedCards.includes(idx)
                   "
                   @click="selectCard(idx)"
@@ -64,7 +64,7 @@
           <TransitionGroup name="card" appear>
             <v-row
               v-if="store.displayLogic().voteResult && store.voteOptions"
-              v-for="(playerVote, idx) in store.voteResult"
+              v-for="(playerVote, idx) in store.voteResults"
             >
               <v-col cols="1"> </v-col>
               <v-col>
@@ -133,7 +133,7 @@ const { pointsForPlayer } = storeToRefs(store);
 function selectCard(idx: number) {
   if (!client.connected) return;
   if (!store.question) return;
-  if (store.selectedCards.length < store.question.card_number) {
+  if (store.selectedCards.length < store.question.num) {
     if (store.selectedCards.includes(idx)) store.selectedCards = [];
     store.selectedCards.push(idx);
   } else {
@@ -141,7 +141,7 @@ function selectCard(idx: number) {
     store.selectedCards.push(idx);
   }
 
-  if (store.selectedCards.length >= store.question.card_number) {
+  if (store.selectedCards.length >= store.question.num) {
     client.room?.send("selectCards", { cards: store.selectedCards });
   }
 }
@@ -168,16 +168,16 @@ const stateText = computed<string>(() => {
   if (!store.question)
     return "Warte..." + (!store.gameStarted ? " Lobby füllt sich..." : "");
   const selectCardText =
-    store.question.card_number === 1
+    store.question.num === 1
       ? "Wähle eine Karte!"
-      : `Wähle ${store.question.card_number} Karten!`;
-  return store.selectedCards.length >= store.question.card_number
+      : `Wähle ${store.question.num} Karten!`;
+  return store.selectedCards.length >= store.question.num
     ? "Warte auf andere Spieler..."
     : selectCardText;
 });
 
 function getSelectedIdx(idx: number): string {
-  if (store.question === null || store.question.card_number <= 1) return "";
+  if (store.question === null || store.question.num <= 1) return "";
   const i = store.selectedCards.findIndex((e) => e === idx);
   if (i > -1) return i + 1 + "";
   return "";

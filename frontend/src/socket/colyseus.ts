@@ -17,20 +17,34 @@ class ColyseusClient {
     );
   }
 
-  private async tryReconnect(name: string, reconnectionToken: string) {
+  private async tryReconnect(
+    name: string,
+    uniqueId: string,
+    reconnectionToken: string
+  ) {
     try {
       this._room = await this.client.reconnect(reconnectionToken);
     } catch (e) {
       console.error("reconnect error", e);
-      this._room = await this.client.joinOrCreate("game_room", { name });
+      this._room = await this.client.joinOrCreate("game_room", {
+        name,
+        uniqueId
+      });
     }
   }
 
-  public async connect(name: string, reconnectionToken?: string) {
+  public async connect(
+    name: string,
+    uniqueId: string,
+    reconnectionToken?: string
+  ) {
     if (reconnectionToken) {
-      await this.tryReconnect(name, reconnectionToken);
+      await this.tryReconnect(name, uniqueId, reconnectionToken);
     } else {
-      this._room = await this.client.joinOrCreate("game_room", { name });
+      this._room = await this.client.joinOrCreate("game_room", {
+        name,
+        uniqueId
+      });
     }
     return this._room?.reconnectionToken;
     // TODO retry

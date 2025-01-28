@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { useStorage } from "@vueuse/core";
 import { delete_cookie } from "../utils/cookies";
+import { v4 as uuid } from "uuid";
 
 export enum GameState {
   SELECT_CARD = "SELECT_CARD",
@@ -15,11 +16,11 @@ export interface State {
   showAlert: boolean;
   question: Question | null;
   players: Array<Player>;
-  hand: Array<string>;
+  hand: Array<Card>;
   selectedCards: Array<number>;
   voteOptions: Array<Array<string>> | null;
   selectedVoteOption: number | null;
-  voteResult: Array<PlayerVote> | null;
+  voteResults: Array<PlayerVote> | null;
   readyForNextRound: boolean;
   startedAt: string | null;
 }
@@ -50,19 +51,27 @@ export interface Player {
   selectionMade: boolean;
 }
 
+export interface Card {
+  text: string;
+}
+
 export interface Question {
   text: string;
-  card_number: number;
+  num: number;
 }
 
 // https://stackoverflow.com/q/43080547
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
 
 export const useStore = defineStore("app", {
-  state(): Overwrite<State, { name: any; reconnectionToken: any }> {
+  state(): Overwrite<
+    State,
+    { name: any; reconnectionToken: any; uniqueId: any }
+  > {
     return {
       name: useStorage("name", ""),
       reconnectionToken: useStorage("reconnectionToken", ""),
+      uniqueId: useStorage("uniqueId", ""),
       isAdmin: false,
       alertMessage: {
         title: "",
@@ -76,7 +85,7 @@ export const useStore = defineStore("app", {
       startedAt: null,
       voteOptions: null,
       selectedVoteOption: null,
-      voteResult: null,
+      voteResults: null,
       readyForNextRound: false,
       gameState: GameState.SELECT_CARD,
       presentersMode: false
@@ -87,9 +96,11 @@ export const useStore = defineStore("app", {
       this.$reset();
       this.name = ""; // necessary because of vueuse.
       this.reconnectionToken = "";
+      this.uniqueId = "";
       delete_cookie("session", "/");
     },
     setName(name: string) {
+      this.uniqueId = uuid();
       this.name = name;
     },
     setReconnectionToken(reconnectionToken: string) {
@@ -124,8 +135,8 @@ export const useStore = defineStore("app", {
       }
       if (payload.selectedVoteOption !== undefined)
         this.selectedVoteOption = payload.selectedVoteOption;
-      if (payload.voteResult !== undefined)
-        this.voteResult = payload.voteResult;
+      if (payload.voteResults !== undefined)
+        this.voteResults = payload.voteResults;
       if (payload.readyForNextRound !== undefined)
         this.readyForNextRound = payload.readyForNextRound;
 
@@ -157,8 +168,8 @@ export const useStore = defineStore("app", {
     },
     pointsForPlayer(state) {
       return (name: string) => {
-        if (!state.voteResult) return 0;
-        const results = state.voteResult.find((r) => r.owner === name);
+        if (!state.voteResults) return 0;
+        const results = state.voteResults.find((r) => r.owner === name);
         if (!results) return 0;
         return results.players?.filter((p) => p !== name)?.length ?? 0;
       };
@@ -166,39 +177,26 @@ export const useStore = defineStore("app", {
     displayLogic(state) {
       let displayLogic: DisplayLogic;
 
-      if (state.presentersMode) {
-        displayLogic = {
-          question: !!state.question,
-          hand:
-            state.gameState === GameState.SELECT_CARD &&
-            !!state.question &&
-            !state.isAdmin,
-          voteOptions:
-            state.gameState === GameState.VOTE &&
-            state.voteOptions !== null &&
-            state.isAdmin,
-          voteResult:
-            state.gameState === GameState.SHOW_RESULTS &&
-            state.voteResult !== null &&
-            state.voteOptions !== null,
-          continue:
-            state.voteResult !== null &&
-            state.voteOptions !== null &&
-            state.isAdmin
-        };
-      } else {
-        displayLogic = {
-          question: !!state.question,
-          hand: state.gameState === GameState.SELECT_CARD && !!state.question,
-          voteOptions:
-            state.gameState === GameState.VOTE && state.voteOptions !== null,
-          voteResult:
-            state.gameState === GameState.SHOW_RESULTS &&
-            state.voteResult !== null &&
-            state.voteOptions !== null,
-          continue: state.voteResult !== null && state.voteOptions !== null
-        };
-      }
+      displayLogic = {
+        question: !!state.question,
+        hand:
+          state.gameState === GameState.SELECT_CARD &&
+          !!state.question &&
+          (!state.presentersMode || !state.isAdmin),
+        voteOptions:
+          state.gameState === GameState.VOTE &&
+          !!state.voteOptions?.length &&
+          (!state.presentersMode || state.isAdmin),
+        voteResult:
+          state.gameState === GameState.SHOW_RESULTS &&
+          !!state.voteResults?.length &&
+          !!state.voteOptions?.length,
+        continue:
+          state.gameState === GameState.SHOW_RESULTS &&
+          !!state.voteResults?.length &&
+          !!state.voteOptions?.length &&
+          (!state.presentersMode || state.isAdmin)
+      };
 
       return () => displayLogic;
     }

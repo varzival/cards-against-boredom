@@ -1,3 +1,4 @@
+import { ArraySchema } from "@colyseus/schema";
 import { Room, Client } from "@colyseus/core";
 import {
   Card,
@@ -5,11 +6,14 @@ import {
   GameState,
   Question,
   User,
+  VoteOption,
+  VoteResult,
 } from "./schema/GameRoomState";
 import { CardModel, QuestionModel } from "../mongodb/schemas";
 
 export interface IUserOptions {
   name: string;
+  uniqueId: string;
 }
 
 function shuffle(array: Array<any>) {
@@ -53,6 +57,7 @@ export class GameRoom extends Room<GameRoomState> {
       if (this.allCardsChosen()) {
         this.state.gameState = GameState.VOTE;
         this.shuffleVoteOptions();
+        this.populateVoteOptions();
       }
     });
 
@@ -70,16 +75,17 @@ export class GameRoom extends Room<GameRoomState> {
       if (this.allVoted()) {
         this.state.gameState = GameState.SHOW_RESULTS;
         this.calculatePoints();
+        this.populateVoteResults();
       }
     });
 
-    this.onMessage("continue", (client) => {
+    this.onMessage("continue", async (client) => {
       this.checkStarted();
       this.checkGameState(GameState.SHOW_RESULTS);
       const user = this.getUser(client.sessionId);
       user.continue = true;
       if (this.allContinue()) {
-        this.state.gameState = GameState.SELECT_CARD;
+        await this.resetGameRound();
       }
     });
   }
@@ -120,11 +126,28 @@ export class GameRoom extends Room<GameRoomState> {
   }
 
   getUser(sessionId: string) {
-    const user = this.state.users.get(sessionId);
+    let user;
+    for (const u of this.state.users.values()) {
+      if (u.sessionIds.includes(sessionId)) {
+        user = u;
+        break;
+      }
+    }
     if (!user) {
       throw new Error("User not found");
     }
     return user;
+  }
+
+  cleanupDisconnectedUsersByName(name: string) {
+    for (const [uniqueId, user] of this.state.users.entries()) {
+      if (user.name !== name) {
+        continue;
+      }
+      if (user.sessionIds.length === 0) {
+        this.state.users.delete(uniqueId);
+      }
+    }
   }
 
   validateArrayOfNumbers(data: any) {
@@ -212,7 +235,46 @@ export class GameRoom extends Room<GameRoomState> {
     }
   }
 
+  populateVoteOptions() {
+    this.state.voteOptions.clear();
+    const sortedUsers = Array.from(this.state.users.values()).sort(
+      (a, b) => a.voteOrder - b.voteOrder
+    );
+    for (const user of sortedUsers) {
+      const selectedCards = new Array<Card>();
+      for (const idx of user.selectedCards) {
+        selectedCards.push(user.cards[idx]);
+      }
+      const voteOption = new VoteOption();
+      for (const card of selectedCards) {
+        voteOption.cards.push(card);
+      }
+      this.state.voteOptions.push(voteOption);
+    }
+  }
+
+  populateVoteResults() {
+    this.state.voteResults.clear();
+    const sortedUsers = Array.from(this.state.users.values()).sort(
+      (a, b) => a.voteOrder - b.voteOrder
+    );
+    for (const user of sortedUsers) {
+      const votedFor = sortedUsers
+        .filter((u) => u.votedFor === user.voteOrder)
+        .map((u) => u.name);
+      const voteResult = new VoteResult({
+        vote: user.voteOrder,
+        owner: user.name,
+      });
+      for (const player of votedFor) {
+        voteResult.players.push(player);
+      }
+      this.state.voteResults.push(voteResult);
+    }
+  }
+
   async resetGameRound() {
+    this.state.gameState = GameState.SELECT_CARD;
     const cards = Array.from(this.state.cards);
     for (const user of this.state.users.values()) {
       user.cards.clear();
@@ -235,6 +297,8 @@ export class GameRoom extends Room<GameRoomState> {
     if (!this.state.questions.length) {
       await this.shuffleQuestions();
     }
+    this.state.voteOptions.clear();
+    this.state.voteResults.clear();
   }
 
   async dealCards(user: User) {
@@ -283,13 +347,29 @@ export class GameRoom extends Room<GameRoomState> {
       throw new Error("name is required");
     }
     console.log(client.sessionId, options.name, "joined!");
-    this.state.users.set(client.sessionId, new User({ name: options.name }));
+    const user = this.state.users.get(options.uniqueId);
+    if (!user) {
+      this.state.users.set(
+        options.uniqueId,
+        new User({ name: options.name, sessionIds: [client.sessionId] })
+      );
+      return;
+    }
+    if (
+      user.sessionIds.includes(client.sessionId) ||
+      user.name !== options.name
+    ) {
+      throw new Error("User already joined");
+    }
+    user.sessionIds.push(client.sessionId);
   }
 
   async onLeave(client: Client, consented: boolean) {
     console.log(client.sessionId, "left! consented:", consented);
+    const user = this.getUser(client.sessionId);
     if (consented) {
-      this.state.users.delete(client.sessionId);
+      user.sessionIds.splice(user.sessionIds.indexOf(client.sessionId), 1);
+      this.cleanupDisconnectedUsersByName(user.name);
     } else {
       this.state.users.get(client.sessionId).active = false;
       try {
@@ -298,7 +378,8 @@ export class GameRoom extends Room<GameRoomState> {
         this.state.users.get(client.sessionId).active = true;
       } catch (e) {
         // reconnection expired. remove player
-        this.state.users.delete(client.sessionId);
+        user.sessionIds.splice(user.sessionIds.indexOf(client.sessionId), 1);
+        this.cleanupDisconnectedUsersByName(user.name);
       }
     }
   }

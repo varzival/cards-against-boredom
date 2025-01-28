@@ -19,6 +19,9 @@ import { GameRoom } from "./rooms/GameRoom";
 import { connect } from "mongoose";
 
 export default config({
+  //   options: {
+  //     devMode: process.env.NODE_ENV !== "production",
+  //   },
   initializeGameServer: async (gameServer) => {
     /**
      * Define your room handlers:

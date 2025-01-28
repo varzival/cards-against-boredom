@@ -21,11 +21,23 @@ export class User extends Schema {
   @type("number") points: number = 0;
   @type([Card]) cards: ArraySchema<Card> = new ArraySchema();
   @type(["number"]) selectedCards: ArraySchema<number> = new ArraySchema();
-  @type("number") voteOrder: number | null = null;
   @type("number") votedFor: number | null = null;
   @type("boolean") continue: boolean = false;
-  @type("boolean") isAdmin: boolean;
   @type("boolean") active: boolean = true;
+
+  isAdmin: boolean;
+  sessionIds: string[] = [];
+  voteOrder: number | null = null;
+}
+
+export class VoteOption extends Schema {
+  @type([Card]) cards: ArraySchema<Card> = new ArraySchema();
+}
+
+export class VoteResult extends Schema {
+  @type(["string"]) players: ArraySchema<string> = new ArraySchema();
+  @type("number") vote: number;
+  @type("string") owner: string;
 }
 
 export class GameRoomState extends Schema {
@@ -36,4 +48,6 @@ export class GameRoomState extends Schema {
   @type({ map: User }) users = new MapSchema<User>();
   @type([Card]) cards: ArraySchema<Card> = new ArraySchema();
   @type([Question]) questions: ArraySchema<Question> = new ArraySchema();
+  @type([VoteOption]) voteOptions: ArraySchema<VoteOption> = new ArraySchema();
+  @type([VoteResult]) voteResults: ArraySchema<VoteResult> = new ArraySchema();
 }

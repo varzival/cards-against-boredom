@@ -9,7 +9,7 @@ export enum GameState {
 type GameStateType = keyof typeof GameState;
 
 function filterSessionIds(this: User, client: Client) {
-  return this.sessionIds.includes(client.sessionId);
+  return client.userData.uniqueId === this.uniqueId;
 }
 
 export class Card extends Schema {
@@ -28,21 +28,22 @@ export class User extends Schema {
   @type("boolean") active: boolean = true;
   @type("boolean") voted: boolean = false;
 
-  //   @filter(filterSessionIds)
+  @filter(filterSessionIds)
   @type([Card])
   cards: ArraySchema<Card> = new ArraySchema();
 
-  //   @filter(filterSessionIds)
+  @filter(filterSessionIds)
   @type(["number"])
   selectedCards: ArraySchema<number> = new ArraySchema();
 
-  //   @filter(filterSessionIds)
+  @filter(filterSessionIds)
   @type("number")
   votedFor: number;
 
   isAdmin: boolean;
   sessionIds: string[] = [];
   voteOrder: number;
+  uniqueId: string;
 }
 
 export class VoteOption extends Schema {

@@ -141,15 +141,25 @@ export class GameRoom extends Room<GameRoomState> {
     return user;
   }
 
-  cleanupDisconnectedUsersByName(name: string) {
-    for (const [uniqueId, user] of this.state.users.entries()) {
-      if (user.name !== name) {
-        continue;
-      }
-      if (user.sessionIds.length === 0) {
-        this.state.users.delete(uniqueId);
-      }
+  cleanupDisconnectedUser(uniqueId: string) {
+    const user = this.state.users.get(uniqueId);
+    if (user.sessionIds.length === 0) {
+      this.state.users.delete(uniqueId);
     }
+  }
+
+  removeSession(client: Client) {
+    const user = this.state.users.get(client.userData.uniqueId);
+    user.sessionIds.splice(user.sessionIds.indexOf(client.sessionId), 1);
+    if (user.sessionIds.length === 0) {
+      user.active = false;
+    }
+  }
+
+  addSession(client: Client) {
+    const user = this.state.users.get(client.userData.uniqueId);
+    user.sessionIds.push(client.sessionId);
+    user.active = true;
   }
 
   validateArrayOfNumbers(data: any) {
@@ -356,13 +366,14 @@ export class GameRoom extends Room<GameRoomState> {
       throw new Error("name is required");
     }
     console.log(client.sessionId, options.name, "joined!");
-    const user = this.state.users.get(options.uniqueId);
+    let user = this.state.users.get(options.uniqueId);
     if (!user) {
-      this.state.users.set(
-        options.uniqueId,
-        new User({ name: options.name, sessionIds: [client.sessionId] })
-      );
-      return;
+      user = new User({
+        name: options.name,
+        sessionIds: [],
+        uniqueId: options.uniqueId,
+      });
+      this.state.users.set(options.uniqueId, user);
     }
     if (
       user.sessionIds.includes(client.sessionId) ||
@@ -370,6 +381,7 @@ export class GameRoom extends Room<GameRoomState> {
     ) {
       throw new Error("User already joined");
     }
+    client.userData = { uniqueId: options.uniqueId };
     user.sessionIds.push(client.sessionId);
   }
 
@@ -378,19 +390,18 @@ export class GameRoom extends Room<GameRoomState> {
     const user = this.getUser(client.sessionId);
     if (consented) {
       user.sessionIds.splice(user.sessionIds.indexOf(client.sessionId), 1);
-      this.cleanupDisconnectedUsersByName(user.name);
     } else {
-      this.state.users.get(client.sessionId).active = false;
+      this.removeSession(client);
       try {
         await this.allowReconnection(client, 60);
         console.log(client.sessionId, "reconnected!");
-        this.state.users.get(client.sessionId).active = true;
+        this.addSession(client);
       } catch (e) {
         // reconnection expired. remove player
         user.sessionIds.splice(user.sessionIds.indexOf(client.sessionId), 1);
-        this.cleanupDisconnectedUsersByName(user.name);
       }
     }
+    this.cleanupDisconnectedUser(client.userData.uniqueId);
   }
 
   onDispose() {

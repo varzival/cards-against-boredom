@@ -72,10 +72,12 @@ async function initSocket() {
             };
           }),
           hand: self.cards.map((c: any) => ({ text: c.text })),
-          question: state.questions?.map((q: any) => ({
-            text: q.text,
-            num: q.num
-          }))[0], // TODO
+          question: state.question?.text
+            ? {
+                text: state.question.text,
+                num: state.question.num
+              }
+            : null,
           voteOptions: state.voteOptions.map((o: any) =>
             o.cards.map((c: any) => c.text)
           ),
@@ -85,7 +87,6 @@ async function initSocket() {
             players: r.players.map((p: any) => p)
           }))
         });
-        console.log(store.voteResults);
       });
 
       client.room?.onError((code, message) => {

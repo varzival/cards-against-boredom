@@ -1,4 +1,3 @@
-import { ArraySchema } from "@colyseus/schema";
 import { Room, Client } from "@colyseus/core";
 import {
   Card,
@@ -72,6 +71,7 @@ export class GameRoom extends Room<GameRoomState> {
       }
       const user = this.getUser(client.sessionId);
       user.votedFor = data.voteOption;
+      user.voted = true;
       if (this.allVoted()) {
         this.state.gameState = GameState.SHOW_RESULTS;
         this.calculatePoints();
@@ -113,13 +113,15 @@ export class GameRoom extends Room<GameRoomState> {
     this.state.startedAt = null;
     this.state.presentersMode = false;
     this.state.gameState = GameState.SELECT_CARD;
-    this.state.cards.clear();
-    this.state.questions.clear();
+    this.state.cards = [];
+    this.state.questions = [];
+    this.state.question = null;
     for (const user of this.state.users.values()) {
       user.cards.clear();
       user.selectedCards.clear();
       user.voteOrder = -1;
       user.votedFor = -1;
+      user.voted = false;
       user.points = 0;
       user.continue = false;
     }
@@ -191,12 +193,12 @@ export class GameRoom extends Room<GameRoomState> {
   allVoted() {
     if (this.state.presentersMode) {
       for (const user of this.state.users.values()) {
-        if (user.isAdmin && user.votedFor === null) return false;
+        if (user.isAdmin && !user.voted) return false;
       }
       return true;
     }
     for (const user of this.state.users.values()) {
-      if (user.votedFor === null) return false;
+      if (!user.voted) return false;
     }
     return true;
   }
@@ -290,10 +292,12 @@ export class GameRoom extends Room<GameRoomState> {
 
       user.selectedCards.clear();
       user.continue = false;
-      user.voteOrder = null;
-      user.votedFor = null;
+      user.voteOrder = -1;
+      user.votedFor = -1;
+      user.voted = false;
     }
     this.state.questions.shift();
+    this.state.question = this.state.questions[0];
     if (!this.state.questions.length) {
       await this.shuffleQuestions();
     }
@@ -312,7 +316,7 @@ export class GameRoom extends Room<GameRoomState> {
     const cards = await CardModel.find({});
     let idxCards = Array.from(Array(cards.length).keys());
     idxCards = shuffle(idxCards);
-    this.state.cards.clear();
+    this.state.cards = [];
     for (const idx of idxCards) {
       const card = cards[idx];
       this.state.cards.push(new Card({ text: card.text }));
@@ -323,13 +327,18 @@ export class GameRoom extends Room<GameRoomState> {
     const questions = await QuestionModel.find({});
     let idxQuestions = Array.from(Array(questions.length).keys());
     idxQuestions = shuffle(idxQuestions);
-    this.state.questions.clear();
+    this.state.questions = [];
     for (const idx of idxQuestions) {
       const question = questions[idx];
       this.state.questions.push(
         new Question({ text: question.text, num: question.num })
       );
     }
+    const topQuestion = this.state.questions[0];
+    this.state.question = new Question({
+      text: topQuestion.text,
+      num: topQuestion.num,
+    });
   }
 
   async drawCard(user: User) {

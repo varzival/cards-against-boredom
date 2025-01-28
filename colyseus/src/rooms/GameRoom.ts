@@ -48,7 +48,7 @@ export class GameRoom extends Room<GameRoomState> {
       if (this.state.questions[0].num !== cards.length) {
         throw new Error("Not the right amount of cards chosen");
       }
-      const user = this.getUser(client.sessionId);
+      const user = this.getUser(client);
       user.selectedCards.clear();
       for (const card of cards) {
         user.selectedCards.push(card);
@@ -69,7 +69,7 @@ export class GameRoom extends Room<GameRoomState> {
       if (data.voteOption < 0 || data.voteOption >= this.state.users.size) {
         throw new Error("Invalid vote");
       }
-      const user = this.getUser(client.sessionId);
+      const user = this.getUser(client);
       user.votedFor = data.voteOption;
       user.voted = true;
       if (this.allVoted()) {
@@ -82,7 +82,7 @@ export class GameRoom extends Room<GameRoomState> {
     this.onMessage("continue", async (client) => {
       this.checkStarted();
       this.checkGameState(GameState.SHOW_RESULTS);
-      const user = this.getUser(client.sessionId);
+      const user = this.getUser(client);
       user.continue = true;
       if (this.allContinue()) {
         await this.resetGameRound();
@@ -127,14 +127,8 @@ export class GameRoom extends Room<GameRoomState> {
     }
   }
 
-  getUser(sessionId: string) {
-    let user;
-    for (const u of this.state.users.values()) {
-      if (u.sessionIds.includes(sessionId)) {
-        user = u;
-        break;
-      }
-    }
+  getUser(client: Client): User {
+    const user = this.state.users.get(client.userData.uniqueId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -387,7 +381,7 @@ export class GameRoom extends Room<GameRoomState> {
 
   async onLeave(client: Client, consented: boolean) {
     console.log(client.sessionId, "left! consented:", consented);
-    const user = this.getUser(client.sessionId);
+    const user = this.getUser(client);
     if (consented) {
       user.sessionIds.splice(user.sessionIds.indexOf(client.sessionId), 1);
     } else {

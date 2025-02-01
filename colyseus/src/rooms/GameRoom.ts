@@ -1,4 +1,5 @@
 import { Room, Client } from "@colyseus/core";
+import { ArraySchema } from "@colyseus/schema";
 import {
   Card,
   GameRoomState,
@@ -281,15 +282,10 @@ export class GameRoom extends Room<GameRoomState> {
 
   async resetGameRound() {
     this.state.gameState = GameState.SELECT_CARD;
-    const cards = Array.from(this.state.cards);
     for (const user of this.state.users.values()) {
-      user.cards.clear();
-      // TODO does that work? Is there an easier way?
-      for (const card of cards.filter(
-        (_, i) => !user.selectedCards.includes(i)
-      )) {
-        user.cards.push(card);
-      }
+      user.cards = new ArraySchema(
+        ...user.cards.filter((_, i) => !user.selectedCards.includes(i))
+      );
       for (const _ of user.selectedCards) {
         await this.drawCard(user);
       }
@@ -301,10 +297,10 @@ export class GameRoom extends Room<GameRoomState> {
       user.voted = false;
     }
     this.state.questions.shift();
-    this.state.question = this.state.questions[0];
     if (!this.state.questions.length) {
       await this.shuffleQuestions();
     }
+    this.state.question = this.state.questions[0];
     this.state.voteOptions.clear();
     this.state.voteResults.clear();
   }
@@ -377,6 +373,10 @@ export class GameRoom extends Room<GameRoomState> {
     }
     client.userData = { uniqueId: options.uniqueId };
     user.sessionIds.push(client.sessionId);
+
+    if (this.state.startedAt) {
+      this.dealCards(user);
+    }
   }
 
   async onLeave(client: Client, consented: boolean) {

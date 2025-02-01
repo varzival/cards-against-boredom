@@ -9,7 +9,11 @@ import {
   VoteOption,
   VoteResult,
 } from "./schema/GameRoomState";
-import { CardModel, QuestionModel } from "../mongodb/schemas";
+import {
+  CardModel,
+  GameRoomStateModel,
+  QuestionModel,
+} from "../mongodb/schemas";
 
 export interface IUserOptions {
   name: string;
@@ -32,10 +36,22 @@ function shuffle(array: Array<any>) {
 
 export class GameRoom extends Room<GameRoomState> {
   maxClients = 100;
+  get autoDispose() {
+    return false;
+  }
 
   async onCreate() {
-    // TODO load from database
-    this.setState(new GameRoomState());
+    // for sume reason, the room is not disposed of on shutdown without this
+    process.on("SIGINT", async () => {
+      console.log("SIGINT received");
+    });
+
+    try {
+      await this.loadState();
+    } catch (e) {
+      ("Could not decode state, instantiating new game room state");
+      this.setState(new GameRoomState());
+    }
     this.roomId = "game_room";
 
     this.onMessage("selectCards", (client, data) => {
@@ -401,7 +417,27 @@ export class GameRoom extends Room<GameRoomState> {
     this.cleanupDisconnectedUser(client.userData.uniqueId);
   }
 
-  onDispose() {
+  async dumpState() {
+    const encodedState = this.state.encode();
+    console.log(encodedState);
+    const gameRoomState = new GameRoomStateModel({ state: encodedState });
+    await gameRoomState.save();
+  }
+
+  async loadState() {
+    const gameRoomState = await GameRoomStateModel.findOne().exec();
+
+    if (gameRoomState) {
+      const decoded = this.state.decode(gameRoomState.state as any);
+      console.log(decoded);
+      // this.setState(GameRoomState.decode(gameRoomState.state));
+    } else {
+      throw new Error("No game room state found");
+    }
+  }
+
+  async onDispose() {
     console.log("room", this.roomId, "disposing...");
+    await this.dumpState();
   }
 }

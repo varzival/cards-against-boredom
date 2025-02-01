@@ -25,3 +25,18 @@ const questionSchema = new Schema<IQuestion>({
 });
 
 export const QuestionModel = model<IQuestion>("Question", questionSchema);
+
+// GAME STATE
+
+interface IGameRoomState extends Document {
+  state: Buffer;
+}
+
+const GameRoomStateSchema: Schema = new Schema({
+  state: { type: Buffer, required: true },
+});
+
+export const GameRoomStateModel = model<IGameRoomState>(
+  "GameRoomState",
+  GameRoomStateSchema
+);

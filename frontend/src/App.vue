@@ -45,13 +45,6 @@ async function initSocket() {
       // TODO handle connection error, handle name already taken
 
       client.room?.onStateChange((state) => {
-        // fix for firefox
-        // if (!store.name) {
-        //   const sessionId = client.room?.sessionId;
-        //   const nameAfterReconnect =
-        //     client.room?.state.users.get(sessionId)?.name;
-        //   store.setName(nameAfterReconnect ?? store.name);
-        // }
         console.log("onStateChange", state);
 
         const players = Array.from(state.users.values() as any[]);
@@ -95,12 +88,10 @@ async function initSocket() {
 
       client.room?.onLeave((data) => {
         console.log("onLeave", data);
-        store.reset();
         client.resetRoom();
       });
     } catch (e) {
       console.error("connection error", e);
-      store.setName("");
       // TODO: maybe not reset it in case that the server is down
       // but then the server needs to persist this value
       store.setReconnectionToken("");

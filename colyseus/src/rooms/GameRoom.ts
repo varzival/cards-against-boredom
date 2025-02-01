@@ -1,5 +1,5 @@
 import { Room, Client } from "@colyseus/core";
-import { ArraySchema } from "@colyseus/schema";
+import { ArraySchema, Reflection } from "@colyseus/schema";
 import {
   Card,
   GameRoomState,
@@ -49,7 +49,8 @@ export class GameRoom extends Room<GameRoomState> {
     try {
       await this.loadState();
     } catch (e) {
-      ("Could not decode state, instantiating new game room state");
+      console.error(e);
+      console.log("Could not decode state, instantiating new game room state");
       this.setState(new GameRoomState());
     }
     this.roomId = "game_room";
@@ -418,17 +419,22 @@ export class GameRoom extends Room<GameRoomState> {
   }
 
   async dumpState() {
-    const encodedState = this.state.encode();
+    const encodedState = this.state.encodeAll();
     console.log(encodedState);
-    const gameRoomState = new GameRoomStateModel({ state: encodedState });
-    await gameRoomState.save();
+    const gameRoomState = new GameRoomStateModel({
+      state: Buffer.from(encodedState),
+    });
+    //await gameRoomState.save();
   }
 
   async loadState() {
     const gameRoomState = await GameRoomStateModel.findOne().exec();
+    const bufferContents = Array.from(gameRoomState.state);
+    console.log(bufferContents);
 
     if (gameRoomState) {
-      const decoded = this.state.decode(gameRoomState.state as any);
+      this.state = new GameRoomState();
+      const decoded = this.state.decode(bufferContents);
       console.log(decoded);
       // this.setState(GameRoomState.decode(gameRoomState.state));
     } else {
@@ -441,3 +447,14 @@ export class GameRoom extends Room<GameRoomState> {
     await this.dumpState();
   }
 }
+
+// // Convert a Buffer to a number[]
+// function bufferToNumberArray(buffer: Buffer): number[] {
+//   const numberArray: number[] = [];
+//   for (let i = 0; i < buffer.length; i += 4) {
+//     const num = buffer.readUInt8(i);
+//     console.log("num", num);
+//     numberArray.push(num);
+//   }
+//   return numberArray;
+// }

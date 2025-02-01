@@ -61,7 +61,9 @@ async function initSocket() {
               name: p.name,
               points: p.points,
               active: p.active,
-              selectionMade: false
+              voted: p.voted,
+              selected: p.selected,
+              continue: p.continue
             };
           }),
           hand: self.cards.map((c: any) => ({ text: c.text })),

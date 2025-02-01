@@ -24,7 +24,9 @@
               icon="mdi-check"
               color="green"
               class="ml-2"
-              v-if="player.selectionMade"
+              v-if="
+                store.playersReady.find((p) => p.name === player.name)?.ready
+              "
             ></v-icon>
             <span class="ml-auto">{{ player.points }}</span>
           </div>

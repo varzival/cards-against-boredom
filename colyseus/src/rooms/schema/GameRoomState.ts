@@ -27,6 +27,7 @@ export class User extends Schema {
   @type("boolean") continue: boolean = false;
   @type("boolean") active: boolean = true;
   @type("boolean") voted: boolean = false;
+  @type("boolean") selected: boolean = false;
 
   @filter(filterSessionIds)
   @type([Card])

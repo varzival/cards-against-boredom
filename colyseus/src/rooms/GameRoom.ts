@@ -54,6 +54,7 @@ export class GameRoom extends Room<GameRoomState> {
       for (const card of cards) {
         user.selectedCards.push(card);
       }
+      user.selected = true;
       if (this.allCardsChosen()) {
         this.state.gameState = GameState.VOTE;
         this.shuffleVoteOptions();
@@ -125,6 +126,7 @@ export class GameRoom extends Room<GameRoomState> {
       user.voted = false;
       user.points = 0;
       user.continue = false;
+      user.selected = false;
     }
   }
 
@@ -295,6 +297,7 @@ export class GameRoom extends Room<GameRoomState> {
       user.voteOrder = -1;
       user.votedFor = -1;
       user.voted = false;
+      user.selected = false;
     }
     this.state.questions.shift();
     if (!this.state.questions.length) {

@@ -48,7 +48,9 @@ export interface Player {
   name: string;
   points: number;
   active: boolean;
-  selectionMade: boolean;
+  voted: boolean;
+  continue: boolean;
+  selected: boolean;
 }
 
 export interface Card {
@@ -109,14 +111,6 @@ export const useStore = defineStore("app", {
     setIsAdmin(isAdmin: boolean) {
       this.isAdmin = isAdmin;
     },
-    addPlayer(name: string) {
-      this.players.push({
-        name,
-        points: 0,
-        active: true,
-        selectionMade: false
-      });
-    },
     // TODO import state typing from colyseus server
     setState(payload: Partial<State>) {
       if (payload.gameState !== undefined) this.gameState = payload.gameState;
@@ -173,6 +167,16 @@ export const useStore = defineStore("app", {
         if (!results) return 0;
         return results.players?.filter((p) => p !== name)?.length ?? 0;
       };
+    },
+    playersReady(state) {
+      if (state.gameState === GameState.SELECT_CARD) {
+        return state.players.map((p) => ({ name: p.name, ready: p.selected }));
+      } else if (state.gameState === GameState.VOTE) {
+        return state.players.map((p) => ({ name: p.name, ready: p.voted }));
+      } else if (state.gameState === GameState.SHOW_RESULTS) {
+        return state.players.map((p) => ({ name: p.name, ready: p.continue }));
+      }
+      return [];
     },
     displayLogic(state) {
       let displayLogic: DisplayLogic;

@@ -6,7 +6,7 @@ volumes:
 services:
 
   mongo:
-    image: mongo
+    image: mongo:7
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: initial_mongo_pwd

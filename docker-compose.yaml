@@ -6,7 +6,7 @@ volumes:
 services:
 
   mongo:
-    image: mongo
+    image: mongo:7
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
